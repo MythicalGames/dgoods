@@ -5,11 +5,11 @@ Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 
 ### Table of Contents
 
-1. [ Introduction](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#introduction)
-2. [Required Methods](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#required-methods)
-3. [Token Data](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#token-data)
-4. [Metadata Examples](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#metadata-examples)
-5. [Definitions](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#definitions)
+1. [Introduction](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#1-introduction)
+2. [Required Methods](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#2-required-methods)
+3. [Token Data](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#3-token-data)
+4. [Metadata Examples](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#4-metadata-examples)
+5. [Definitions](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#5-definitions)
 
 ## 1. Introduction
 
@@ -19,7 +19,7 @@ Our ansatz is that a game or company will want to create many different tokens t
 
 Our design philosophy is to start small, remain flexible, and provide a robust digital goods standard that supports a diverse and innovative development community. Therefore,much of this specification is a logical extension of the standard EOS token with the addition of significant functionality improvements that will allow teams to easily integrate and display virtual items. In the following sections we describe the minimum set of required methods and functionality for implementing this specification, along with the table structure, and finally some example metadata templates.
 
-### 2. Required Methods
+## 2. Required Methods
 
 ** CREATE: ** The create method instantiates a token. This is required before any tokens can be issued and sets properties such as the category, name, maximum supply, who has the ability to issue tokens, and if the token is fungible or not. Additionally, the first time this is called the symbol is recorded and subsequent calls must specify that symbol. Symbol must be A-Z, 7 character max. Name type is a string 12 characters max a-z, 1-5.
 
@@ -67,7 +67,7 @@ memo);
 ACTION transfer(name from, name to, uint64_t global_id, double quantity);
 ```
 
-### 3. Token Data
+## 3. Token Data
 
 
 #### 3.1 Symbol Info Table
@@ -155,7 +155,7 @@ TABLE account {
 };
 ```
 
-### 4. Metadata Examples
+## 4. Metadata Examples
 
 In order for wallets or dApps to support various digital goods, there need to be standards associated with the metadata. Our approach is to define templates based on the type of good. The following templates are candidates we have put forth, but this is to be a collaborative exercise. We want to provide a repository of templates that are agreed upon by the community. All metadata is formatted in JSON and must specify the type of template.
 
@@ -264,7 +264,7 @@ In order for wallets or dApps to support various digital goods, there need to be
 }
 ```
 
-### 5. Definitions
+## 5. Definitions
 
 - **RAM** - Refers to the permanent storage space on the EOS blockchain. Must be purchased from the EOS blockchain itself by sending EOS. Can also be sold if unused.
 - **Account** - An EOS account is up to 12 characters and contains letters a-z, numbers
