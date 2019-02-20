@@ -1,17 +1,15 @@
 # dGoods: Digital Goods Token Spec v0.1
 
 ### Authors
-Cameron Thacker
-Stephan Cunningham
-Rudy Koch
-John Linden
+Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 
 ### Table of Contents
-[1. Introduction](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#introduction)
-[2. Required Methods](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#required-methods)
-[3. Token Data](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#token-data)
-[4. Metadata Examples](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#metadata-examples)
-[5. Definitions](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#definitions)
+
+1. [ Introduction](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#introduction)
+2. [Required Methods](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#required-methods)
+3. [Token Data](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#token-data)
+4. [Metadata Examples](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#metadata-examples)
+5. [Definitions](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#definitions)
 
 ## 1. Introduction
 
@@ -30,32 +28,32 @@ ACTION create(name issuer, string symbol, name category, name token_name, bool
 fungible, bool burnable, bool transferable, int64_t max_supply);
 ```
 
-** ISSUE: ** The issue method mints a token and gives ownership to the ‘to’ account name. For a valid call the symbol, category, and token name must have been first created. Quantity must be equal to 1 if non-fungible or semi-fungible, otherwise quantity must be greater or equal to 0.0001.
+**ISSUE:** The issue method mints a token and gives ownership to the ‘to’ account name. For a valid call the symbol, category, and token name must have been first created. Quantity must be equal to 1 if non-fungible or semi-fungible, otherwise quantity must be greater or equal to 0.0001.
 
 ```c
 ACTION issue(name to, string symbol, name category, name token_name, double
 quantity, string metadata_uri, string memo);
 ```
 
-** PAUSEXFER: ** Pauses all transfers of all tokens. Only callable by the contract. If pause is true, will pause. If pause is false will unpause transfers.
+**PAUSEXFER:** Pauses all transfers of all tokens. Only callable by the contract. If pause is true, will pause. If pause is false will unpause transfers.
 
 ```c
 ACTION pausexfer(bool pause);
 ```
 
-** BURNNFT: ** Burn method destroys specified tokens and frees the RAM. Only owner may call burn function and burnable must be true.
+**BURNNFT:** Burn method destroys specified tokens and frees the RAM. Only owner may call burn function and burnable must be true.
 
 ```c
 ACTION burnnft(name owner, vector<uint64_t> tokeninfo_ids);
 ```
 
-** BURN: ** Burn method destroys fungible tokens and frees the RAM if all are deleted. Only owner may call Burn function and burnable must be true.
+**BURN:** Burn method destroys fungible tokens and frees the RAM if all are deleted. Only owner may call Burn function and burnable must be true.
 
 ```c
 ACTION burn(name owner, uint64_t global_id, double quantity);
 ```
 
-** TRANSFERNFT: ** Used to transfer non-fungible tokens. This allows for the ability to
+**TRANSFERNFT:** Used to transfer non-fungible tokens. This allows for the ability to
 batch send tokens in one function call by passing in a list of token ids. Only the token owner can successfully call this function and transferable must be true.
 
 ```c
@@ -63,7 +61,7 @@ ACTION transfernft(name from, name to, vector<uint64_t> tokeninfo_ids, string
 memo);
 ```
 
-** TRANSFER: **  The standard transfer method is callable only on fungible tokens. Instead of specifying tokens individually, a token is specified by it’s global id followed by an amount desired to be sent.
+**TRANSFER:**  The standard transfer method is callable only on fungible tokens. Instead of specifying tokens individually, a token is specified by it’s global id followed by an amount desired to be sent.
 
 ```c
 ACTION transfer(name from, name to, uint64_t global_id, double quantity);
