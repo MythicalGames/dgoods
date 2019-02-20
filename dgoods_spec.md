@@ -7,9 +7,9 @@ Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 
 1. [Introduction](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#1-introduction)
 2. [Required Methods](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#2-required-methods)
-3. [Token Data](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#3-token-data)
-4. [Metadata Examples](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#4-metadata-examples)
-5. [Definitions](#https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#5-definitions)
+3. [Token Data](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#3-token-data)
+4. [Metadata Examples](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#4-metadata-examples)
+5. [Definitions](https://github.com/dbendt/dgoods/blob/master/dgoods_spec.md#5-definitions)
 
 ## 1. Introduction
 
@@ -21,7 +21,7 @@ Our design philosophy is to start small, remain flexible, and provide a robust d
 
 ## 2. Required Methods
 
-** CREATE: ** The create method instantiates a token. This is required before any tokens can be issued and sets properties such as the category, name, maximum supply, who has the ability to issue tokens, and if the token is fungible or not. Additionally, the first time this is called the symbol is recorded and subsequent calls must specify that symbol. Symbol must be A-Z, 7 character max. Name type is a string 12 characters max a-z, 1-5.
+**CREATE:** The create method instantiates a token. This is required before any tokens can be issued and sets properties such as the category, name, maximum supply, who has the ability to issue tokens, and if the token is fungible or not. Additionally, the first time this is called the symbol is recorded and subsequent calls must specify that symbol. Symbol must be A-Z, 7 character max. Name type is a string 12 characters max a-z, 1-5.
 
 ```c
 ACTION create(name issuer, string symbol, name category, name token_name, bool
