@@ -144,6 +144,21 @@ Only the token owner can successfully call this function.
 ACTION canceloffer(name owner, vector<uint64_t> tokeninfo_ids);
 ```
 
+**RENTOUTNFT**: Used to rent out non-fungible tokens for a fixed duration.
+The renter takes temporary ownership, but they will not be able to transfer it.
+Only the token owner can successfully call this function and transferable must be true.
+
+```c++
+ACTION rentoutnft(name owner, name renter, uint64_t tokeninfo_id, uint64_t rental_duration, string memo);
+```
+
+**RECLAIMNFT**: Used to reclaim non-fungible tokens after their rental period has expired.
+Only the token owner can successfully call this function, and the rental end time must have passed.
+
+```c++
+ACTION reclaimnft(name owner, vector<uint64_t> tokeninfo_ids)
+```
+
 Dasset Type
 ===========
 
@@ -261,6 +276,21 @@ TABLE offer {
   name to;
 
   uint64_t primary_key() const { return tokeninfo_id; }
+};
+```
+
+Rental Table
+----------------
+
+```c++
+// scope is self
+TABLE rental {
+   uint64_t tokeninfo_id;
+   name owner;
+   name renter;
+   time_point_sec rental_end_time
+
+   uint64_t primary_key() const { return tokeninfo_id; }
 };
 ```
 
