@@ -121,6 +121,29 @@ may call and transferrable must be true.
 ACTION transfer(name from, name to, name category, name token_name, string quantity, string memo);
 ```
 
+**OFFERNFT**: Used to offer non-fungible tokens. This is an alternative to transfer,
+which requires the receiver to accept the offer, thereby assuming the RAM costs.
+Only the token owner can successfully call this function and transferable must be true.
+
+```c++
+ACTION offernft(name from, name to, vector<uint64_t> tokeninfo_ids, string memo);
+```
+
+**ACCEPTOFFER**: Used to accept an offer of non-fungible tokens.
+After accepting, the receiver assumes the RAM costs of the NFT.
+This can only be called after receiving an offer for those NFTs.
+
+```c++
+ACTION acceptoffer(name accepter, vector<uint64_t> tokeninfo_ids);
+```
+
+**CANCELOFFER**: Used to cancel an offer of non-fungible tokens.
+Only the token owner can successfully call this function.
+
+```c++
+ACTION canceloffer(name owner, vector<uint64_t> tokeninfo_ids);
+```
+
 Dasset Type
 ===========
 
@@ -224,7 +247,21 @@ TABLE tokeninfo {
     
     uint64_t primary_key() const { return id; }
     uint64_t get_owner() const { return owner.value; }
-};   
+}; 
+```
+
+Offer Table
+----------------
+
+```c++
+// scope is self
+TABLE offer {
+  uint64_t tokeninfo_id;
+  name from;
+  name to;
+
+  uint64_t primary_key() const { return tokeninfo_id; }
+};
 ```
 
 Category Table
