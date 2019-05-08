@@ -1,4 +1,4 @@
-dGoods: Digital Goods Token Spec v0.2
+dGoods: Digital Goods Token Spec v0.3beta
 =====================================
 
 Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
@@ -66,7 +66,7 @@ values after a decimal point (similar to a normal EOS asset).
 
 ```c++
 ACTION create(name issuer, name category, name token_name, bool fungible, bool
-              burnable, bool transferable, string max_supply);
+              burnable, bool transferable, string base_uri, string max_supply);
 ```
 
 **ISSUE**: The issue method mints a token and gives ownership to the
@@ -77,8 +77,8 @@ or semi-fungible, otherwise quantity must match precision of
 templates.
 
 ```c++
-ACTION issue(name to, name category, name token_name, string quantity, string metadata_type, 
-             string metadata_uri, string memo);
+ACTION issue(name to, name category, name token_name, string quantity, string relative_uri,
+             string memo);
 ```
 
 **PAUSEXFER**: Pauses all transfers of all tokens. Only callable by the
@@ -93,15 +93,15 @@ ACTION pausexfer(bool pause);
 Only owner may call burn function and burnable must be true.
 
 ```c++
-ACTION burnnft(name owner, vector<uint64_t> tokeninfo_ids);
+ACTION burnnft(name owner, vector<uint64_t> dgood_ids);
 ```
 
-**BURN**: Burn method destroys fungible tokens and frees the RAM if all
+**BURNFT**: Burn method destroys fungible tokens and frees the RAM if all
 are deleted from an account. Only owner may call Burn function and
 burnable must be true.
 
 ```c++
-ACTION burn(name owner, uint64_t category_name_id, string quantity);
+ACTION burnft(name owner, uint64_t category_name_id, string quantity);
 ```
 
 **TRANSFERNFT**: Used to transfer non-fungible tokens. This allows for
@@ -110,15 +110,30 @@ list of token ids. Only the token owner can successfully call this
 function and transferable must be true.
 
 ```c++
-ACTION transfernft(name from, name to, vector<uint64_t> tokeninfo_ids, string memo);
+ACTION transfernft(name from, name to, vector<uint64_t> dgood_ids, string memo);
 ```
 
-**TRANSFER**: The standard transfer method is callable only on fungible
+**TRANSFERFT**: The standard transfer method is callable only on fungible
 tokens. Quantity must match precision of `max_supply`. Only token owner
 may call and transferrable must be true.
 
 ```c++
-ACTION transfer(name from, name to, name category, name token_name, string quantity, string memo);
+ACTION transferft(name from, name to, name category, name token_name, string quantity, string memo);
+```
+
+**LISTSALENFT**: Used to list an nft for sale in the token contract itself. Callable only by owner,
+creates sale listing in the token contract; transfers ownership to token contract while sale is
+active
+
+```c++
+ACTION listsalenft(name seller, uint64_t dgood_id, asset net_sale_amount);
+```
+
+**CLOSESALENFT**: Callable by seller if listing hasn't expired, or anyone if the listing is expired;
+will remove listing and return nft to seller
+
+```c++
+ACTION closesalenft(name seller, uint64_t dgood_id);
 ```
 
 Dasset Type
@@ -166,7 +181,7 @@ defined with `setconfig` before any tokens can be created. As part of a
 and standard field that lets wallets know what they will need to support
 from this contract.
 
-`Category_name_id` is incremented each time `create` is successfully
+`category_name_id` is incremented each time `create` is successfully
 called
 
 ```c++
@@ -179,7 +194,7 @@ TABLE tokenconfigs {
 };
 ```
 
-Token Stats Table
+dGood Stats Table
 -----------------
 
 Ensures there can be only one `category`, `token_name pair`. Stores
@@ -190,7 +205,7 @@ tokens are burned as issued supply never decreases.
 
 ```c++
 // scope is category, then token_name is unique
-TABLE tokenstats {
+TABLE dgoodstats {
     bool     fungible;
     bool     burnable;
     bool     transferable;
@@ -200,12 +215,13 @@ TABLE tokenstats {
     dasset   max_supply;
     uint64_t current_supply;
     uint64_t issued_supply;
+    string base_uri;
      
     uint64_t primary_key() const { return token_name.value; }
 };
 ```
 
-Token Info Table
+dGood Table
 ----------------
 
 This is the global list of non or semi-fungible tokens. Secondary
@@ -213,18 +229,18 @@ indices provide search by owner.
 
 ```c++
 // scope is self
-TABLE tokeninfo {
+TABLE dgood {
     uint64_t id;
     uint64_t serial_number;
     name owner;
     name category;
     name token_name;
-    string metadata_type;
-    string metadata_uri;
+    std::optional<string> relative_uri;
     
     uint64_t primary_key() const { return id; }
     uint64_t get_owner() const { return owner.value; }
 };   
+EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri) )
 ```
 
 Category Table
@@ -241,6 +257,24 @@ TABLE categoryinfo {
 };
 ```
 
+ASKS Table
+--------------
+
+Holds listings for sale in the built in decentralized exchange (DEX)
+
+```c++
+// scope is self
+TABLE asks {
+  uint64_t dgood_id;
+  name seller;
+  asset amount;
+  time_point_sec expiration;
+
+  uint64_t primary_key() const { return dgood_id; }
+  uint64_t get_seller() const { return seller.value; }
+};    
+```
+
 Account Table
 -------------
 
@@ -249,7 +283,7 @@ reference to how many NFTs that account owns of a given type.
 
 ```c++
 // scope is owner
-TABLE account {
+TABLE accounts {
     uint64_t category_name_id;
     name category;
     name token_name;
