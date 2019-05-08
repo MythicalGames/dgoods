@@ -15,7 +15,8 @@ Three most important properties of dGoods which differentiate from other token s
 1) hierarchical naming structure of category:name for each token or set of tokens, enabling filtering
   and organization of tokens
 
-2) focus on semi-fungible tokens -- that is, tokens that are 1 of n with a serial number
+2) focus on semi-fungible tokens -- that is, tokens that are 1 of n with a serial number or slightly
+different metadata
 
 3) opensource metadata types and standardization for each type with localization, eg `3dGameAsset`, `Ticket`, etc
 
@@ -26,6 +27,53 @@ Three most important properties of dGoods which differentiate from other token s
 
 Changes
 =======
+
+
+v0.3beta
+--------
+
+* release of beta implementation
+
+DEX in a token (simple marketplace functionality)
+
+* listing tokens for sale is now built into the token itself
+* `listsalenft`: callable ownly by owner; creates a sale listing in the token contract valid
+  for 1 week, transfers ownership to token contract
+* `closesalenft`: callable by seller if listing hasn't expired, or anyone if the listing is expired;
+  will remove listing and return nft to seller
+* `buynft`: called when a user sends EOS to the dgood contract with a memo of "dgood_id,to_account"
+* the buy action allows a user (or marketplace) to buy on behalf of another user
+
+Metadata URI changes
+
+* `metadata_uri` is now formed from a `base_uri` +  either the `dgood_id` or `relative_uri` if it
+  exists
+* `create` now takes a `base_uri` string
+* `issue` has a `relative_uri` parameter, but it is now optional (enter empty string)
+* if no `relative_uri` is specified on a given token, the metadata should be accessed by taking
+  `base_uri` + `dgood_id`
+* if a `relative_uri` exists, the metadata is `base_uri` + `relative_uri`
+* this serves multiple purposes, but the most important is that it saves an immense amount of RAM
+  compared to the total cost of creating a single token
+* can still accommodate ipfs
+
+Table Changes
+
+* table names and table types now matchin abi making decoding easier from state history
+* some table names were changed to be more precise
+* `tokenstats` -> `dgoodstats`
+* `tokeninfo` -> `dgood`
+* `tokeninfo_id` -> `dgood_id`
+
+Misc
+
+* replaced `_self` with `get_self()` for future proofing
+* actions dealing with fungible tokens now have `ft` appended (ex burn -> burnft)
+* trim functionality implemented when parsing string
+* fungible tokens can be created with precision of 0 and no decimal place (ex 10)
+* precision mismatch assert will print what precision is required
+* logcall function logs the `dgood_id` during issuance to aid in matching transaction with action
+
 
 v0.2
 ----      
