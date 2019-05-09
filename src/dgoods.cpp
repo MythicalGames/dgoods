@@ -63,7 +63,7 @@ ACTION dgoods::create(name issuer,
         stats.issuer = issuer;
         stats.token_name = token_name;
         stats.fungible = fungible;
-        stats.burnable = burnable;                                 actions
+        stats.burnable = burnable;
         stats.transferable = transferable;
         stats.current_supply = 0;
         stats.issued_supply = 0;
