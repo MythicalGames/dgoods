@@ -1,6 +1,7 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon May  6 16:40:44 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
     "version": "eosio::abi/1.1",
+    "types": [],
     "structs": [
         {
             "name": "accounts",
@@ -201,7 +202,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "metadata_uri",
+                    "name": "relative_uri",
                     "type": "string?"
                 }
             ]
@@ -273,7 +274,7 @@
                     "type": "string"
                 },
                 {
-                    "name": "metadata_uri",
+                    "name": "relative_uri",
                     "type": "string"
                 },
                 {
@@ -321,20 +322,6 @@
                 {
                     "name": "version",
                     "type": "string"
-                }
-            ]
-        },
-        {
-            "name": "setrampayer",
-            "base": "",
-            "fields": [
-                {
-                    "name": "payer",
-                    "type": "name"
-                },
-                {
-                    "name": "id",
-                    "type": "uint64"
                 }
             ]
         },
@@ -413,7 +400,6 @@
             ]
         }
     ],
-    "types": [],
     "actions": [
         {
             "name": "burnft",
@@ -458,11 +444,6 @@
         {
             "name": "setconfig",
             "type": "setconfig",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "setrampayer",
-            "type": "setrampayer",
             "ricardian_contract": ""
         },
         {
@@ -521,6 +502,5 @@
         }
     ],
     "ricardian_clauses": [],
-    "variants": [],
-    "abi_extensions": []
+    "variants": []
 }

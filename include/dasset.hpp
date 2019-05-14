@@ -1,6 +1,5 @@
 #pragma once
 
-#include <eosiolib/eosio.hpp>
 #include <string>
 #include "utility.hpp"
 
@@ -23,13 +22,13 @@ namespace dgoods_asset {
 
         void _check_precision(const uint8_t& p) {
             static constexpr uint8_t max_precision = 18;
-            eosio_assert( p <= max_precision, "precision must be less than 19");
+            check( p <= max_precision, "precision must be less than 19");
         }
 
         void _check_max(const uint64_t& a) {
             static constexpr uint64_t max_amount = ( 1LL << 62 ) - 1;
-            eosio_assert( a <= max_amount, "max supply must be less than 2^62 - 1");
-            eosio_assert( a > 0, "max supply must be greater than 0");
+            check( a <= max_amount, "max supply must be less than 2^62 - 1");
+            check( a > 0, "max supply must be greater than 0");
         }
 
         dasset() {}
@@ -41,7 +40,7 @@ namespace dgoods_asset {
             uint64_t frac_part;
             uint64_t p10;
             if ( dot_pos != string::npos ) {
-                eosio_assert( ( dot_pos != string_amount.size() - 1 ), "missing decimal fraction after decimal point");
+                check( ( dot_pos != string_amount.size() - 1 ), "missing decimal fraction after decimal point");
             }
             if ( dot_pos == string::npos ) {
                 uint_part = stoull(string_amount);
