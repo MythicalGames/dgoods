@@ -57,7 +57,7 @@ CONTRACT dgoods: public contract {
                            vector<uint64_t> dgood_ids,
                            string memo);
 
-	    ACTION transferft(name from,
+        ACTION transferft(name from,
                           name to,
                           name category,
                           name token_name,
