@@ -1,4 +1,4 @@
-dGoods: 虚拟物品代币规范 v0.2
+dGoods: 虚拟物品代币规范 v0.3 beta
 =====================================
 Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 [译:TokenPocket](https://www.tokenpocket.pro/) 
@@ -42,14 +42,14 @@ create函数用于实例化一个代币。它是在任何代币进行发行前�
 
 ```c++
 ACTION create(name issuer, name category, name token_name, bool fungible, bool
-              burnable, bool transferable, string max_supply);
+              burnable, bool transferable, string base_uri, string max_supply);
 ```
 
 **ISSUE**: issue函数可以发行一个代币，并且将所有权指定给账户名’to’。对于一个有效的函数调用，代币的`category`和`token_name`都必须都先被创建好了。如果是非同质化或半同质化的代币，则数量必须等于1；如果是同质化代币，数量则必须和`max_supply`的精度匹配。`Metadata_type`必须是已接受的元数据类型模板之一。
 
 ```c++
-ACTION issue(name to, name category, name token_name, string quantity, string metadata_type, 
-             string metadata_uri, string memo);
+ACTION issue(name to, name category, name token_name, string quantity, string relative_uri,
+             string memo);
 ```
  
  **PAUSEXFER**: 暂停所有代币的所有转账，仅有合约可以调用该函数。如果 pause 参数值为 true，则暂停转账;否则，不暂停。
@@ -61,27 +61,39 @@ ACTION pausexfer(bool pause);
 **BURNNFT**: 该函数可用于销毁第三方代币并且释放内存，只有代币的拥有者 (owner) 可以调用该方法，并且 burnable 参数值必须为 true
 
 ```c++
-ACTION burnnft(name owner, vector<uint64_t> tokeninfo_ids);
+ACTION burnnft(name owner, vector<uint64_t> dgood_ids);
 ```
 
-**BURN**: 该方法用于销毁同质化代币，并且在所有代币都销毁后释放内存
+**BURNFT**: 该方法用于销毁同质化代币，并且在所有代币都销毁后释放内存
 (RAM)，只有拥有者 (owner) 可以调用该方法，并且 burnable 参数值必须为
 true
 
 ```c++
-ACTION burn(name owner, uint64_t category_name_id, string quantity);
+ACTION burnft(name owner, uint64_t category_name_id, string quantity);
 ```
 
 **TRANSFERNFT**: 用于非同质化代币的转账。并且允许通过传递代币的 id 列表进行批量转账。仅有代币拥有者 (owner) 可以调用该函数并且 transferable 参数值必须为 true。
 
 ```c++
-ACTION transfernft(name from, name to, vector<uint64_t> tokeninfo_ids, string memo);
+ACTION transfernft(name from, name to, vector<uint64_t> dgood_ids, string memo);
 ```
 
-**TRANSFER**: 该标准的转账方法仅用于同质化代币;数量必须与`max_supply`的精度匹配，只有代币的拥有者 (owner) 可以调用，并且transferable的值必须为true。
+**TRANSFERFT**: 该标准的转账方法仅用于同质化代币;数量必须与`max_supply`的精度匹配，只有代币的拥有者 (owner) 可以调用，并且transferable的值必须为true。
 
 ```c++
-ACTION transfer(name from, name to, name category, name token_name, string quantity, string memo);
+ACTION transferft(name from, name to, name category, name token_name, string quantity, string memo);
+```
+
+**LISTSALENFT**: 用于代币合约中出售NFT。只有owner可以调用合约中的这个方法来创建订单，在出售状态，将会把拥有权转交给代币合约。
+
+```c++
+ACTION listsalenft(name seller, uint64_t dgood_id, asset net_sale_amount);
+```
+
+**CLOSESALENFT**: 在订单没有过期前，可以由出售者取消订单；亦可在订单过期的时候，由任何人来取消订单。订单取消之后，将会把NFT退回给出售者。
+
+```c++
+ACTION closesalenft(name seller, uint64_t dgood_id);
 ```
 
 Dasset 类型
@@ -125,14 +137,14 @@ TABLE tokenconfigs {
 };
 ```
 
-Token 数据表
+dGood 数据表
 -----------------
 
 确保只有一对`category`, `token_name`对。存储着token是否同质化的，是否可销毁，是否可以进行转账，当前及最大的供应量是多少。token被创建的时候，信息就被写入。由于供应量不会下降，在销毁代币的时候，供应量要记录唯一编码。
 
 ```c++
 // scope is category, then token_name is unique
-TABLE tokenstats {
+TABLE dgoodstats {
     bool     fungible;
     bool     burnable;
     bool     transferable;
@@ -142,30 +154,31 @@ TABLE tokenstats {
     dasset   max_supply;
     uint64_t current_supply;
     uint64_t issued_supply;
+    string 	base_uri;
      
     uint64_t primary_key() const { return token_name.value; }
 };
 ```
 
-Token 信息表
+dGood 信息表
 ----------------
 
 这是非同质化和半同质化token的全局列表。辅助索引提供了按照所有者 (owner) 进行搜索。
 
 ```c++
 // scope is self
-TABLE tokeninfo {
+TABLE dgood {
     uint64_t id;
     uint64_t serial_number;
     name owner;
     name category;
     name token_name;
-    string metadata_type;
-    string metadata_uri;
+    std::optional<string> relative_uri;
     
     uint64_t primary_key() const { return id; }
     uint64_t get_owner() const { return owner.value; }
 };   
+EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri) )
 ```
 
 分类表
@@ -182,6 +195,24 @@ TABLE categoryinfo {
 };
 ```
 
+ASKS（卖） 表
+--------------
+
+维护内置的去中心化交易所的卖单表
+
+```c++
+// scope is self
+TABLE asks {
+  uint64_t dgood_id;
+  name seller;
+  asset amount;
+  time_point_sec expiration;
+
+  uint64_t primary_key() const { return dgood_id; }
+  uint64_t get_seller() const { return seller.value; }
+};    
+```
+
 账户表
 -------------
 
@@ -189,7 +220,7 @@ TABLE categoryinfo {
 
 ```c++
 // scope is owner
-TABLE account {
+TABLE accounts {
     uint64_t category_name_id;
     name category;
     name token_name;
