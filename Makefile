@@ -10,7 +10,3 @@ build:
 	rm -rf build/*
 	mkdir -p build/dgoods
 	mv dgoods.abi dgoods.wasm build/dgoods/
-
-.PHONY: ddata
-ddata:
-	bash -c "kill $$(pidof nodeos)" && rm -rf ~/.local/share/eosio/nodeos/data/

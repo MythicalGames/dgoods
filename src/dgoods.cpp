@@ -315,12 +315,15 @@ ACTION dgoods::buynft(name from,
                       name to,
                       asset quantity,
                       string memo) {
+    // allow EOS to be sent by sending with empty string memo
+    if ( memo == "deposit" ) return;
+    // don't allow spoofs
     if ( to != get_self() ) return;
     if ( from == name("eosio.stake") ) return;
     if ( quantity.symbol != symbol( symbol_code("EOS"), 4) ) return;
     if ( memo.length() > 32 ) return;
-    // memo format comma separated
-    // dgood_id,to_account
+    //memo format comma separated
+    //dgood_id,to_account
 
     uint64_t dgood_id;
     name to_account;
