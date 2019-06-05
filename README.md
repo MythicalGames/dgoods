@@ -28,6 +28,13 @@ different metadata
 Changes
 =======
 
+v0.4
+----
+
+* update code to be compatible with CDT 1.6.1
+* add checks for invalid amounts
+* allow EOS to be sent without invoking `buynft` by setting memo to "deposit"
+
 
 v0.3beta
 --------

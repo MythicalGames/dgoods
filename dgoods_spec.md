@@ -1,4 +1,4 @@
-dGoods: Digital Goods Token Spec v0.3beta
+dGoods: Digital Goods Token Spec v0.4beta
 =====================================
 
 Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden

@@ -1,4 +1,4 @@
-dGoods: 虚拟物品代币规范 v0.3 beta
+dGoods: 虚拟物品代币规范 v0.4 beta
 =====================================
 Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 [译:TokenPocket](https://www.tokenpocket.pro/) 
