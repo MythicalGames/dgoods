@@ -1,10 +1,10 @@
 #pragma once
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/symbol.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/time.hpp>
-#include <eosiolib/singleton.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/symbol.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/time.hpp>
+#include <eosio/singleton.hpp>
 #include <string>
 #include <vector>
 
@@ -52,15 +52,12 @@ CONTRACT dgoods: public contract {
 
         ACTION buynft(name from, name to, asset quantity, string memo);
 
-        ACTION setrampayer(name payer,
-                           uint64_t id);
-
         ACTION transfernft(name from,
                            name to,
                            vector<uint64_t> dgood_ids,
                            string memo);
 
-	    ACTION transferft(name from,
+        ACTION transferft(name from,
                           name to,
                           name category,
                           name token_name,
@@ -160,9 +157,9 @@ CONTRACT dgoods: public contract {
 
       private:
 
-        void mint( name to, name issuer, name category, name token_name,
-                  uint64_t issued_supply, string relative_uri );
-        void add_balance( name owner, name issuer, name category, name token_name,
-                         uint64_t category_name_id, dasset quantity );
-        void sub_balance( name owner, uint64_t category_name_id, dasset quantity );
+        void mint(name to, name issuer, name category, name token_name,
+                  uint64_t issued_supply, string relative_uri);
+        void add_balance(name owner, name issuer, name category, name token_name,
+                         uint64_t category_name_id, dasset quantity);
+        void sub_balance(name owner, uint64_t category_name_id, dasset quantity);
 };

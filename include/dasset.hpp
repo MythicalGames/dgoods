@@ -1,6 +1,5 @@
 #pragma once
 
-#include <eosiolib/eosio.hpp>
 #include <string>
 #include "utility.hpp"
 
@@ -23,25 +22,25 @@ namespace dgoods_asset {
 
         void _check_precision(const uint8_t& p) {
             static constexpr uint8_t max_precision = 18;
-            eosio_assert( p <= max_precision, "precision must be less than 19");
+            check( p <= max_precision, "precision must be less than 19");
         }
 
         void _check_max(const uint64_t& a) {
             static constexpr uint64_t max_amount = ( 1LL << 62 ) - 1;
-            eosio_assert( a <= max_amount, "max supply must be less than 2^62 - 1");
-            eosio_assert( a > 0, "max supply must be greater than 0");
+            check( a < max_amount, "max supply must be less than 2^62 - 1");
         }
 
         dasset() {}
 
         void from_string(const string& s) {
             string string_amount = trim(s);
+            check( ( string_amount[0] != '-' ), "Amount can not be negative" );
             auto dot_pos = string_amount.find('.');
             uint64_t uint_part;
             uint64_t frac_part;
             uint64_t p10;
             if ( dot_pos != string::npos ) {
-                eosio_assert( ( dot_pos != string_amount.size() - 1 ), "missing decimal fraction after decimal point");
+                check( ( dot_pos != string_amount.size() - 1 ), "missing decimal fraction after decimal point");
             }
             if ( dot_pos == string::npos ) {
                 uint_part = stoull(string_amount);
@@ -57,6 +56,7 @@ namespace dgoods_asset {
                 frac_part = stoull(string_amount.substr( dot_pos + 1 ));
             }
             amount = uint_part * p10 + frac_part;
+            check( amount > 0, "max supply must be greater than 0");
 
         }
 
@@ -66,6 +66,7 @@ namespace dgoods_asset {
             _check_precision(p);
 
             string string_amount = trim(s);
+            check( ( string_amount[0] != '-' ), "Amount can not be negative" );
             // 1.0 1. 1
             uint64_t uint_part;
             uint64_t frac_part;
@@ -82,6 +83,7 @@ namespace dgoods_asset {
             _check_max(uint_part);
             uint64_t p10 = _get_precision(p);
             amount = uint_part * p10 + frac_part;
+            check( amount > 0, "max supply must be greater than 0");
 
         }
 

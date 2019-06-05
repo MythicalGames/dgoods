@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <locale>
-#include <eosiolib/eosio.hpp>
+#include <eosio/eosio.hpp>
 
 using namespace std;
 using namespace eosio;
@@ -34,10 +34,12 @@ namespace utility {
 
     tuple<uint64_t, name> parsememo(const string& memo) {
         auto dot_pos = memo.find(',');
+        string errormsg = "malformed memo: must have dgood_id,to_account";
+        check ( dot_pos != string::npos, errormsg.c_str() );
         if ( dot_pos != string::npos ) {
-            eosio_assert( ( dot_pos != memo.size() - 1 ), "malformed memo, must have dgood_id,to_account");
+            check( ( dot_pos != memo.size() - 1 ), errormsg.c_str() );
         }
-        // need to trim substring
+        // will abort if stoull throws error since wasm no error checking
         uint64_t dgood_id = stoull( trim( memo.substr( 0, dot_pos ) ) );
         name to_account = name( trim ( memo.substr( dot_pos + 1 ) ) );
 
