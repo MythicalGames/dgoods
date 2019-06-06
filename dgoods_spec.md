@@ -60,24 +60,23 @@ ACTION setconfig(symbol_code sym, string version);
 before any tokens can be issued and sets properties such as the
 category, name, maximum supply, who has the ability to issue tokens, and
 if the token is fungible or not etc. Name type is a string 12 characters
-max a-z, 1-5. Supply is given as a string and converted to the dasset
-type internally. For fungible tokens precision is set by including
-values after a decimal point (similar to a normal EOS asset).
+max a-z, 1-5. Max supply is given as an eosio asset. For non fungible
+tokens, precision must be 0 (you must use ints). The symbol in the asset
+must match the symbol in `setconfig`.
 
 ```c++
 ACTION create(name issuer, name category, name token_name, bool fungible, bool
-              burnable, bool transferable, string base_uri, string max_supply);
+              burnable, bool transferable, string base_uri, asset max_supply);
 ```
 
 **ISSUE**: The issue method mints a token and gives ownership to the
 'to' account name. For a valid call the `category`, and `token_name`
-must have been first created. Quantity will be set to 1 if non-fungible
-or semi-fungible, otherwise quantity must match precision of
-`max_supply`. `Metadata_type` must be one of the accepted metadata type
-templates.
+must have been first created. Quantity must be an int for NFT and if greater
+than 1, will issue multiple tokens. Precision must match precision of
+`max_supply`.
 
 ```c++
-ACTION issue(name to, name category, name token_name, string quantity, string relative_uri,
+ACTION issue(name to, name category, name token_name, asset quantity, string relative_uri,
              string memo);
 ```
 
@@ -97,11 +96,11 @@ ACTION burnnft(name owner, vector<uint64_t> dgood_ids);
 ```
 
 **BURNFT**: Burn method destroys fungible tokens and frees the RAM if all
-are deleted from an account. Only owner may call Burn function and
-burnable must be true.
+are deleted from an account. quantity must match precision of `max_supply`.
+Only owner may call Burn function and burnable must be true.
 
 ```c++
-ACTION burnft(name owner, uint64_t category_name_id, string quantity);
+ACTION burnft(name owner, uint64_t category_name_id, asset quantity);
 ```
 
 **TRANSFERNFT**: Used to transfer non-fungible tokens. This allows for
@@ -118,7 +117,7 @@ tokens. Quantity must match precision of `max_supply`. Only token owner
 may call and transferrable must be true.
 
 ```c++
-ACTION transferft(name from, name to, name category, name token_name, string quantity, string memo);
+ACTION transferft(name from, name to, name category, name token_name, asset quantity, string memo);
 ```
 
 **LISTSALENFT**: Used to list an nft for sale in the token contract itself. Callable only by owner,
@@ -134,37 +133,6 @@ will remove listing and return nft to seller
 
 ```c++
 ACTION closesalenft(name seller, uint64_t dgood_id);
-```
-
-Dasset Type
-===========
-
-To accommodate the ability to specify precision in a token, we take an
-approach similar to EOS, by creating an asset type that stores the
-amount in a `uint64_t` and the precision in a `uint8_t`. Values with
-decimal points like 1.23 become a uint of 123 with precision of 2.
-Additionally, the struct checks values fall within accepted limits.
-
-There are two reasons for this type rather than using the
-`<eoslib/asset.hpp>` type. The first reason is that we do not want a
-token symbol to be attached to this type. We have a more complicated
-structure for naming already and only require properly converting and
-storing amounts. This saves RAM that would be unused. The second reason
-to create our own asset is to have a method for generating an asset from
-a string.
-
-Dasset Struct
--------------
-
-```c++
-struct dasset {
-    uint64_t amount;
-    uint8_t precision; 
-
-    void from_string(const string& string_amount) {}        
-    void from_string(const string& string_amount, const uint64_t& p) {}
-}
-EOSLIB_SERIALIZE( dasset, (amount)(precision) )
 ```
 
 Token Data
@@ -212,10 +180,10 @@ TABLE dgoodstats {
     name     issuer;
     name     token_name;
     uint64_t category_name_id;
-    dasset   max_supply;
-    uint64_t current_supply;
-    uint64_t issued_supply;
-    string base_uri;
+    asset    max_supply;
+    asset    current_supply;
+    asset    issued_supply;
+    string   base_uri;
      
     uint64_t primary_key() const { return token_name.value; }
 };
@@ -287,7 +255,7 @@ TABLE accounts {
     uint64_t category_name_id;
     name category;
     name token_name;
-    dasset amount;
+    asset amount;
     
     uint64_t primary_key() const { return category_name_id; }
 }; 
