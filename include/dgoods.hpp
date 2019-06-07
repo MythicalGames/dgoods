@@ -156,8 +156,8 @@ CONTRACT dgoods: public contract {
             indexed_by< "byseller"_n, const_mem_fun< asks, uint64_t, &asks::get_seller> > >;
 
       private:
+        void changeowner( name from, name to, vector<uint64_t> dgood_ds, string memo, bool istransfer);
         void checkasset( asset amount, bool fungible );
-
         void mint(name to, name issuer, name category, name token_name,
                   asset issued_supply, string relative_uri);
         void add_balance(name owner, name issuer, name category, name token_name,
