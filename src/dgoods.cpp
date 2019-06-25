@@ -20,6 +20,7 @@ ACTION dgoods::create(name issuer,
                       name token_name,
                       bool fungible,
                       bool burnable,
+                      bool sellable,
                       bool transferable,
                       string base_uri,
                       asset max_supply) {
@@ -61,6 +62,7 @@ ACTION dgoods::create(name issuer,
         stats.token_name = token_name;
         stats.fungible = fungible;
         stats.burnable = burnable;
+        stats.sellable = sellable;
         stats.transferable = transferable;
         stats.current_supply = current_supply;
         stats.issued_supply = issued_supply;
@@ -240,6 +242,13 @@ ACTION dgoods::listsalenft(name seller,
     ask_index ask_table( get_self(), get_self().value );
     auto ask = ask_table.find( dgood_id);
     check ( ask == ask_table.end(), "already listed for sale" );
+
+    dgood_index dgood_table( get_self(), get_self().value );
+    const auto& token = dgood_table.get( dgood_id, "token does not exist" );
+
+    stats_index stats_table( get_self(), token.category.value );
+    const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
+    check( dgood_stats.sellable == true, "not sellable");
 
     // listing nft for sale, change ownership to token contract for escrow, can always close sale
     // and get back

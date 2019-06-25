@@ -150,6 +150,10 @@
                     "type": "bool"
                 },
                 {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
                     "name": "transferable",
                     "type": "bool"
                 },
@@ -203,6 +207,10 @@
                 },
                 {
                     "name": "burnable",
+                    "type": "bool"
+                },
+                {
+                    "name": "sellable",
                     "type": "bool"
                 },
                 {

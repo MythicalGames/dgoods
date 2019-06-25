@@ -32,6 +32,7 @@ CONTRACT dgoods: public contract {
                       name token_name,
                       bool fungible,
                       bool burnable,
+                      bool sellable,
                       bool transferable,
                       string base_uri,
                       asset max_supply);
@@ -103,6 +104,7 @@ CONTRACT dgoods: public contract {
         TABLE dgoodstats {
             bool     fungible;
             bool     burnable;
+            bool     sellable;
             bool     transferable;
             name     issuer;
             name     token_name;
