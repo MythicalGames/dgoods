@@ -40,8 +40,8 @@ ACTION dgoods::create(name issuer,
 
     category_index category_table( get_self(), get_self().value );
     auto existing_category = category_table.find( category.value );
-    // category hasn't been created before, create it
 
+    // category hasn't been created before, create it
     if ( existing_category == category_table.end() ) {
         category_table.emplace( get_self(), [&]( auto& cat ) {
             cat.category = category;
@@ -111,7 +111,7 @@ ACTION dgoods::issue(name to,
                  dgood_stats.issued_supply, relative_uri);
         }
     }
-    add_balance(to, dgood_stats.issuer, category, token_name, dgood_stats.category_name_id, quantity);
+    add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 
     // increase current supply
     stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
@@ -225,7 +225,7 @@ ACTION dgoods::transferft(name from,
     string string_precision = "precision of quantity must be " + to_string( dgood_stats.max_supply.symbol.precision() );
     check( quantity.symbol == dgood_stats.max_supply.symbol, string_precision.c_str() );
     sub_balance(from, dgood_stats.category_name_id, quantity);
-    add_balance(to, from, category, token_name, dgood_stats.category_name_id, quantity);
+    add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 
 }
 
@@ -239,10 +239,6 @@ ACTION dgoods::listsalenft(name seller,
     check( net_sale_amount.amount > .02, "minimum price of at least 0.02 EOS");
     check( net_sale_amount.symbol == symbol( symbol_code("EOS"), 4), "only accept EOS for sale" );
 
-    ask_index ask_table( get_self(), get_self().value );
-    auto ask = ask_table.find( dgood_id);
-    check ( ask == ask_table.end(), "already listed for sale" );
-
     dgood_index dgood_table( get_self(), get_self().value );
     const auto& token = dgood_table.get( dgood_id, "token does not exist" );
 
@@ -250,16 +246,27 @@ ACTION dgoods::listsalenft(name seller,
     const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
     check( dgood_stats.sellable == true, "not sellable");
 
-    // listing nft for sale, change ownership to token contract for escrow, can always close sale
-    // and get back
-    changeowner( seller, get_self(), dgood_ids, "listing," + seller.to_string(), false);
+    check ( seller == token.owner, "not token owner");
+    // check not already listed for sale
+    ask_index ask_table( get_self(), get_self().value );
+    auto ask = ask_table.find( dgood_id);
+    check ( ask == ask_table.end(), "already listed for sale" );
+
+    // make sure token not locked;
+    lock_index lock_table( get_self(), get_self().value );
+    auto locked_nft = lock_table.find( dgood_id );
+    check(locked_nft == lock_table.end(), "token locked");
+    // add token to lock table
+    lock_table.emplace( seller, [&]( auto& l ) {
+        l.dgood_id = dgood_id;
+    });
 
     // add token to table of asks
-    ask_table.emplace( seller, [&]( auto& ask ) {
-        ask.dgood_id = dgood_id;
-        ask.seller = seller;
-        ask.amount = net_sale_amount;
-        ask.expiration = time_point_sec(current_time_point()) + WEEK_SEC;
+    ask_table.emplace( seller, [&]( auto& a ) {
+        a.dgood_id = dgood_id;
+        a.seller = seller;
+        a.amount = net_sale_amount;
+        a.expiration = time_point_sec(current_time_point()) + WEEK_SEC;
     });
 }
 
@@ -267,21 +274,22 @@ ACTION dgoods::closesalenft(name seller,
                             uint64_t dgood_id) {
     ask_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( dgood_id, "cannot cancel sale that doesn't exist" );
+
+    lock_index lock_table( get_self(), get_self().value );
+    const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
     // if sale has expired anyone can call this and ask removed, token sent back to orig seller
     if ( time_point_sec(current_time_point()) > ask.expiration ) {
         ask_table.erase( ask );
+        lock_table.erase( locked_nft );
 
-        vector<uint64_t> dgood_ids = {dgood_id};
-        // seller closing sale, returning nft
-        changeowner( get_self(), ask.seller, dgood_ids, "expired sale returning to: " + ask.seller.to_string(), false);
     } else {
         require_auth( seller );
         check( ask.seller == seller, "only the seller can cancel a sale in progress");
 
         vector<uint64_t> dgood_ids = {dgood_id};
-        // seller closing sale, returning nft
-        changeowner( get_self(), seller, dgood_ids, "close sale returning to: " + seller.to_string(), false);
+
         ask_table.erase( ask );
+        lock_table.erase( locked_nft );
     }
 }
 
@@ -312,11 +320,17 @@ ACTION dgoods::buynft(name from,
     action( permission_level{ get_self(), name("active") }, name("eosio.token"), name("transfer"),
             make_tuple( get_self(), ask.seller, quantity, "sold token: " + to_string(dgood_id))).send();
 
-    ask_table.erase(ask);
-
     // nft bought, change owner to buyer regardless of transferable
     vector<uint64_t> dgood_ids = {dgood_id};
-    changeowner( get_self(), to_account, dgood_ids, "bought by: " + to_account.to_string(), false);
+    changeowner( ask.seller, to_account, dgood_ids, "bought by: " + to_account.to_string(), false);
+
+    // remove locks, remove from ask table
+    lock_index lock_table( get_self(), get_self().value );
+    const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+    lock_table.erase( locked_nft );
+    ask_table.erase( ask );
+
+
 }
 
 // method to log dgood_id and match transaction to action
@@ -328,15 +342,18 @@ ACTION dgoods::logcall(uint64_t dgood_id) {
 void dgoods::changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
     // loop through vector of dgood_ids, check token exists
     dgood_index dgood_table( get_self(), get_self().value );
+    lock_index lock_table( get_self(), get_self().value );
     for ( auto const& dgood_id: dgood_ids ) {
         const auto& token = dgood_table.get( dgood_id, "token does not exist" );
-        check( token.owner == from, "must be token owner" );
 
         stats_index stats_table( get_self(), token.category.value );
         const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
 
         if ( istransfer ) {
+            check( token.owner == from, "must be token owner" );
             check( dgood_stats.transferable == true, "not transferable");
+            auto locked_nft = lock_table.find( dgood_id );
+            check( locked_nft == lock_table.end(), "token locked, cannot transfer");
         }
 
         // notifiy both parties
@@ -349,7 +366,7 @@ void dgoods::changeowner(name from, name to, vector<uint64_t> dgood_ids, string 
         // amount 1, precision 0 for NFT
         asset quantity(1, dgood_stats.max_supply.symbol);
         sub_balance(from, dgood_stats.category_name_id, quantity);
-        add_balance(to, from, token.category, token.token_name, dgood_stats.category_name_id, quantity);
+        add_balance(to, get_self(), token.category, token.token_name, dgood_stats.category_name_id, quantity);
     }
 }
 

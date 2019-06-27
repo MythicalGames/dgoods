@@ -66,7 +66,7 @@ must match the symbol in `setconfig`.
 
 ```c++
 ACTION create(name issuer, name category, name token_name, bool fungible, bool
-              burnable, bool transferable, string base_uri, asset max_supply);
+              burnable, bool sellable, bool transferable, string base_uri, asset max_supply);
 ```
 
 **ISSUE**: The issue method mints a token and gives ownership to the
@@ -121,8 +121,7 @@ ACTION transferft(name from, name to, name category, name token_name, asset quan
 ```
 
 **LISTSALENFT**: Used to list an nft for sale in the token contract itself. Callable only by owner,
-creates sale listing in the token contract; transfers ownership to token contract while sale is
-active
+only if sellable is true, creates sale listing in the token contract, marks token as not transferable while listed for sale
 
 ```c++
 ACTION listsalenft(name seller, uint64_t dgood_id, asset net_sale_amount);
@@ -176,6 +175,7 @@ tokens are burned as issued supply never decreases.
 TABLE dgoodstats {
     bool     fungible;
     bool     burnable;
+    bool     sellable;
     bool     transferable;
     name     issuer;
     name     token_name;
@@ -225,7 +225,7 @@ TABLE categoryinfo {
 };
 ```
 
-ASKS Table
+Asks Table
 --------------
 
 Holds listings for sale in the built in decentralized exchange (DEX)
@@ -240,6 +240,20 @@ TABLE asks {
 
   uint64_t primary_key() const { return dgood_id; }
   uint64_t get_seller() const { return seller.value; }
+};    
+```
+
+Locked NFT Table
+----------------
+
+Table corresponding to tokens that are locked and temporarily not transferable
+
+```c++
+// scope is self
+TABLE lockednfts {
+  uint64_t dgood_id;
+
+  uint64_t primary_key() const { return dgood_id; }
 };    
 ```
 
