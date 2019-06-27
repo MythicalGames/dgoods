@@ -150,6 +150,10 @@
                     "type": "bool"
                 },
                 {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
                     "name": "transferable",
                     "type": "bool"
                 },
@@ -203,6 +207,10 @@
                 },
                 {
                     "name": "burnable",
+                    "type": "bool"
+                },
+                {
+                    "name": "sellable",
                     "type": "bool"
                 },
                 {
@@ -284,6 +292,16 @@
                 {
                     "name": "net_sale_amount",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "lockednfts",
+            "base": "",
+            "fields": [
+                {
+                    "name": "dgood_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -475,6 +493,13 @@
         {
             "name": "dgoodstats",
             "type": "dgoodstats",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "lockednfts",
+            "type": "lockednfts",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

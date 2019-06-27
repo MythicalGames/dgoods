@@ -32,6 +32,7 @@ CONTRACT dgoods: public contract {
                       name token_name,
                       bool fungible,
                       bool burnable,
+                      bool sellable,
                       bool transferable,
                       string base_uri,
                       asset max_supply);
@@ -73,6 +74,12 @@ CONTRACT dgoods: public contract {
 
         ACTION logcall(uint64_t dgood_id);
 
+        TABLE lockednfts {
+            uint64_t dgood_id;
+
+            uint64_t primary_key() const { return dgood_id; }
+        };
+
         // now() gets current time in sec
         // uint32_t 604800 is 1 week in seconds
         TABLE asks {
@@ -103,6 +110,7 @@ CONTRACT dgoods: public contract {
         TABLE dgoodstats {
             bool     fungible;
             bool     burnable;
+            bool     sellable;
             bool     transferable;
             name     issuer;
             name     token_name;
@@ -155,9 +163,11 @@ CONTRACT dgoods: public contract {
         using ask_index = multi_index< "asks"_n, asks,
             indexed_by< "byseller"_n, const_mem_fun< asks, uint64_t, &asks::get_seller> > >;
 
-      private:
-        void checkasset( asset amount, bool fungible );
+        using lock_index = multi_index< "lockednfts"_n, lockednfts>;
 
+      private:
+        void changeowner( name from, name to, vector<uint64_t> dgood_ds, string memo, bool istransfer);
+        void checkasset( asset amount, bool fungible );
         void mint(name to, name issuer, name category, name token_name,
                   asset issued_supply, string relative_uri);
         void add_balance(name owner, name issuer, name category, name token_name,
