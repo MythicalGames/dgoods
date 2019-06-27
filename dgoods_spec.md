@@ -106,7 +106,7 @@ ACTION burnft(name owner, uint64_t category_name_id, asset quantity);
 **TRANSFERNFT**: Used to transfer non-fungible tokens. This allows for
 the ability to batch send tokens in one function call by passing in a
 list of token ids. Only the token owner can successfully call this
-function and transferable must be true.
+function, transferable must be true, and token must not be locked.
 
 ```c++
 ACTION transfernft(name from, name to, vector<uint64_t> dgood_ids, string memo);
@@ -121,14 +121,15 @@ ACTION transferft(name from, name to, name category, name token_name, asset quan
 ```
 
 **LISTSALENFT**: Used to list an nft for sale in the token contract itself. Callable only by owner,
-only if sellable is true, creates sale listing in the token contract, marks token as not transferable while listed for sale
+if sellable is true and token not locked, creates sale listing in the token contract, marks token as
+not transferable while listed for sale
 
 ```c++
 ACTION listsalenft(name seller, uint64_t dgood_id, asset net_sale_amount);
 ```
 
 **CLOSESALENFT**: Callable by seller if listing hasn't expired, or anyone if the listing is expired;
-will remove listing and return nft to seller
+will remove listing, remove lock and return nft to seller
 
 ```c++
 ACTION closesalenft(name seller, uint64_t dgood_id);
