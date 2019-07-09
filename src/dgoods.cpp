@@ -230,40 +230,41 @@ ACTION dgoods::transferft(name from,
 }
 
 ACTION dgoods::listsalenft(name seller,
-                           uint64_t dgood_id,
+                           vector<uint64_t> dgood_ids,
                            asset net_sale_amount) {
     require_auth( seller );
-
-    vector<uint64_t> dgood_ids = {dgood_id};
 
     check( net_sale_amount.amount > .02, "minimum price of at least 0.02 EOS");
     check( net_sale_amount.symbol == symbol( symbol_code("EOS"), 4), "only accept EOS for sale" );
 
     dgood_index dgood_table( get_self(), get_self().value );
-    const auto& token = dgood_table.get( dgood_id, "token does not exist" );
+    for ( auto const& dgood_id: dgood_ids ) {
+        const auto& token = dgood_table.get( dgood_id, "token does not exist" );
 
-    stats_index stats_table( get_self(), token.category.value );
-    const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
-    check( dgood_stats.sellable == true, "not sellable");
+        stats_index stats_table( get_self(), token.category.value );
+        const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
 
-    check ( seller == token.owner, "not token owner");
-    // check not already listed for sale
+        check( dgood_stats.sellable == true, "not sellable");
+        check ( seller == token.owner, "not token owner");
+
+        // make sure token not locked;
+        lock_index lock_table( get_self(), get_self().value );
+        auto locked_nft = lock_table.find( dgood_id );
+        check(locked_nft == lock_table.end(), "token locked");
+
+        // add token to lock table
+        lock_table.emplace( seller, [&]( auto& l ) {
+            l.dgood_id = dgood_id;
+        });
+
+    }
+
     ask_index ask_table( get_self(), get_self().value );
-    auto ask = ask_table.find( dgood_id);
-    check ( ask == ask_table.end(), "already listed for sale" );
-
-    // make sure token not locked;
-    lock_index lock_table( get_self(), get_self().value );
-    auto locked_nft = lock_table.find( dgood_id );
-    check(locked_nft == lock_table.end(), "token locked");
-    // add token to lock table
-    lock_table.emplace( seller, [&]( auto& l ) {
-        l.dgood_id = dgood_id;
-    });
-
-    // add token to table of asks
+    // add batch to table of asks
+    // set id to the first dgood being listed, if only one being listed, simplifies life
     ask_table.emplace( seller, [&]( auto& a ) {
-        a.dgood_id = dgood_id;
+        a.batch_id = dgood_ids[0];
+        a.dgood_ids = dgood_ids;
         a.seller = seller;
         a.amount = net_sale_amount;
         a.expiration = time_point_sec(current_time_point()) + WEEK_SEC;
@@ -271,25 +272,27 @@ ACTION dgoods::listsalenft(name seller,
 }
 
 ACTION dgoods::closesalenft(name seller,
-                            uint64_t dgood_id) {
+                            uint64_t batch_id) {
     ask_index ask_table( get_self(), get_self().value );
-    const auto& ask = ask_table.get( dgood_id, "cannot cancel sale that doesn't exist" );
+    const auto& ask = ask_table.get( batch_id, "cannot find sale to close" );
 
     lock_index lock_table( get_self(), get_self().value );
-    const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
     // if sale has expired anyone can call this and ask removed, token sent back to orig seller
     if ( time_point_sec(current_time_point()) > ask.expiration ) {
+        for ( auto const& dgood_id: ask.dgood_ids ) {
+            const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+            lock_table.erase( locked_nft );
+        }
         ask_table.erase( ask );
-        lock_table.erase( locked_nft );
 
     } else {
         require_auth( seller );
         check( ask.seller == seller, "only the seller can cancel a sale in progress");
-
-        vector<uint64_t> dgood_ids = {dgood_id};
-
+        for ( auto const& dgood_id: ask.dgood_ids ) {
+            const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+            lock_table.erase( locked_nft );
+        }
         ask_table.erase( ask );
-        lock_table.erase( locked_nft );
     }
 }
 
@@ -304,33 +307,34 @@ ACTION dgoods::buynft(name from,
     if ( from == name("eosio.stake") ) return;
     check( quantity.symbol == symbol( symbol_code("EOS"), 4), "Buy only with EOS" );
     check( memo.length() <= 32, "memo too long" );
-    //memo format comma separated
-    //dgood_id,to_account
 
-    uint64_t dgood_id;
+    //memo format comma separated
+    //batch_id,to_account
+    uint64_t batch_id;
     name to_account;
-    tie( dgood_id, to_account ) = parsememo(memo);
+    tie( batch_id, to_account ) = parsememo(memo);
 
     ask_index ask_table( get_self(), get_self().value );
-    const auto& ask = ask_table.get( dgood_id, "token not listed for sale" );
+    const auto& ask = ask_table.get( batch_id, "cannot find listing" );
     check ( ask.amount.amount == quantity.amount, "send the correct amount");
     check (ask.expiration > time_point_sec(current_time_point()), "sale has expired");
 
+    // nft(s) bought, change owner to buyer regardless of transferable
+    //SEND_INLINE_ACTION( *this, changeowner, { { get_self(), "active"_n } }, { ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false } );
+    changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
+
     // send EOS to seller
     action( permission_level{ get_self(), name("active") }, name("eosio.token"), name("transfer"),
-            make_tuple( get_self(), ask.seller, quantity, "sold token: " + to_string(dgood_id))).send();
-
-    // nft bought, change owner to buyer regardless of transferable
-    vector<uint64_t> dgood_ids = {dgood_id};
-    changeowner( ask.seller, to_account, dgood_ids, "bought by: " + to_account.to_string(), false);
+            make_tuple( get_self(), ask.seller, quantity, string("listing sold"))).send();
 
     // remove locks, remove from ask table
     lock_index lock_table( get_self(), get_self().value );
-    const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
-    lock_table.erase( locked_nft );
+
+    for ( auto const& dgood_id: ask.dgood_ids ) {
+        const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+        lock_table.erase( locked_nft );
+    }
     ask_table.erase( ask );
-
-
 }
 
 // method to log dgood_id and match transaction to action

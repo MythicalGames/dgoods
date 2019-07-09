@@ -30,8 +30,12 @@
             "base": "",
             "fields": [
                 {
-                    "name": "dgood_id",
+                    "name": "batch_id",
                     "type": "uint64"
+                },
+                {
+                    "name": "dgood_ids",
+                    "type": "uint64[]"
                 },
                 {
                     "name": "seller",
@@ -120,7 +124,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "dgood_id",
+                    "name": "batch_id",
                     "type": "uint64"
                 }
             ]
@@ -286,8 +290,8 @@
                     "type": "name"
                 },
                 {
-                    "name": "dgood_id",
-                    "type": "uint64"
+                    "name": "dgood_ids",
+                    "type": "uint64[]"
                 },
                 {
                     "name": "net_sale_amount",
