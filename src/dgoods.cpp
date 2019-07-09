@@ -313,7 +313,6 @@ ACTION dgoods::buynft(name from,
     uint64_t batch_id;
     name to_account;
     tie( batch_id, to_account ) = parsememo(memo);
-    print(batch_id);
 
     ask_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( batch_id, "cannot find listing" );
@@ -330,11 +329,12 @@ ACTION dgoods::buynft(name from,
 
     // remove locks, remove from ask table
     lock_index lock_table( get_self(), get_self().value );
+
     for ( auto const& dgood_id: ask.dgood_ids ) {
         const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
         lock_table.erase( locked_nft );
-    ask_table.erase( ask );
     }
+    ask_table.erase( ask );
 }
 
 // method to log dgood_id and match transaction to action
