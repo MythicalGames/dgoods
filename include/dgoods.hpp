@@ -28,12 +28,14 @@ CONTRACT dgoods: public contract {
 
 
         ACTION create(name issuer,
+                      name creator,
                       name category,
                       name token_name,
                       bool fungible,
                       bool burnable,
                       bool sellable,
                       bool transferable,
+                      float split_frac,
                       string base_uri,
                       asset max_supply);
 
@@ -51,7 +53,7 @@ CONTRACT dgoods: public contract {
                       uint64_t category_name_id,
                       asset quantity);
 
-        ACTION buynft(name from, name to, asset quantity, string memo);
+        void buynft(name from, name to, asset quantity, string memo);
 
         ACTION transfernft(name from,
                            name to,
@@ -114,11 +116,13 @@ CONTRACT dgoods: public contract {
             bool     sellable;
             bool     transferable;
             name     issuer;
+            name     creator;
             name     token_name;
             uint64_t category_name_id;
             asset    max_supply;
             asset    current_supply;
             asset    issued_supply;
+            float    split_frac;
             string   base_uri;
 
             uint64_t primary_key() const { return token_name.value; }
@@ -167,11 +171,12 @@ CONTRACT dgoods: public contract {
         using lock_index = multi_index< "lockednfts"_n, lockednfts>;
 
       private:
-        void changeowner( name from, name to, vector<uint64_t> dgood_ds, string memo, bool istransfer);
-        void checkasset( asset amount, bool fungible );
-        void mint(name to, name issuer, name category, name token_name,
+        map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount);
+        void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
+        void _checkasset( asset amount, bool fungible );
+        void _mint(name to, name issuer, name category, name token_name,
                   asset issued_supply, string relative_uri);
-        void add_balance(name owner, name issuer, name category, name token_name,
+        void _add_balance(name owner, name issuer, name category, name token_name,
                          uint64_t category_name_id, asset quantity);
-        void sub_balance(name owner, uint64_t category_name_id, asset quantity);
+        void _sub_balance(name owner, uint64_t category_name_id, asset quantity);
 };

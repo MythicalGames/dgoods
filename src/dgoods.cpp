@@ -16,20 +16,26 @@ ACTION dgoods::setconfig(symbol_code sym, string version) {
 }
 
 ACTION dgoods::create(name issuer,
+                      name creator,
                       name category,
                       name token_name,
                       bool fungible,
                       bool burnable,
                       bool sellable,
                       bool transferable,
+                      float split_frac,
                       string base_uri,
                       asset max_supply) {
 
     require_auth( get_self() );
 
-    checkasset( max_supply, fungible );
+
+    _checkasset( max_supply, fungible );
     // check if issuer account exists
     check( is_account( issuer ), "issuer account does not exist" );
+    check( is_account( creator ), "creator account does not exist" );
+    // check split frac is between 0 and 1
+    check( ( split_frac <= 1.0 ) && (split_frac >= 0.0), "split_frac must be between 0 and 1" );
 
     // get category_name_id
     config_index config_table( get_self(), get_self().value );
@@ -59,6 +65,7 @@ ACTION dgoods::create(name issuer,
     stats_table.emplace( get_self(), [&]( auto& stats ) {
         stats.category_name_id = category_name_id;
         stats.issuer = issuer;
+        stats.creator = creator;
         stats.token_name = token_name;
         stats.fungible = fungible;
         stats.burnable = burnable;
@@ -66,6 +73,7 @@ ACTION dgoods::create(name issuer,
         stats.transferable = transferable;
         stats.current_supply = current_supply;
         stats.issued_supply = issued_supply;
+        stats.split_frac = split_frac;
         stats.base_uri = base_uri;
         stats.max_supply = max_supply;
     });
@@ -94,7 +102,7 @@ ACTION dgoods::issue(name to,
     // ensure have issuer authorization and valid quantity
     require_auth( dgood_stats.issuer );
 
-    checkasset( quantity, dgood_stats.fungible );
+    _checkasset( quantity, dgood_stats.fungible );
     string string_precision = "precision of quantity must be " + to_string( dgood_stats.max_supply.symbol.precision() );
     check( quantity.symbol == dgood_stats.max_supply.symbol, string_precision.c_str() );
     // check cannot issue more than max supply, careful of overflow of uint
@@ -103,15 +111,15 @@ ACTION dgoods::issue(name to,
     if (dgood_stats.fungible == false) {
         if ( quantity.amount > 1 ) {
             for ( uint64_t i = 1; i <= quantity.amount; i++ ) {
-                mint(to, dgood_stats.issuer, category, token_name,
+                _mint(to, dgood_stats.issuer, category, token_name,
                      dgood_stats.issued_supply, relative_uri);
             }
         } else {
-            mint(to, dgood_stats.issuer, category, token_name,
+            _mint(to, dgood_stats.issuer, category, token_name,
                  dgood_stats.issued_supply, relative_uri);
         }
     }
-    add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
+    _add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 
     // increase current supply
     stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
@@ -124,8 +132,8 @@ ACTION dgoods::burnnft(name owner,
                        vector<uint64_t> dgood_ids) {
     require_auth(owner);
 
-
     // loop through vector of dgood_ids, check token exists
+    lock_index lock_table( get_self(), get_self().value );
     dgood_index dgood_table( get_self(), get_self().value );
     for ( auto const& dgood_id: dgood_ids ) {
         const auto& token = dgood_table.get( dgood_id, "token does not exist" );
@@ -136,6 +144,9 @@ ACTION dgoods::burnnft(name owner,
 
         check( dgood_stats.burnable == true, "Not burnable");
         check( dgood_stats.fungible == false, "Cannot call burnnft on fungible token, call burn instead");
+        // make sure token not locked;
+        auto locked_nft = lock_table.find( dgood_id );
+        check(locked_nft == lock_table.end(), "token locked");
 
         asset quantity(1, dgood_stats.max_supply.symbol);
         // decrease current supply
@@ -144,7 +155,7 @@ ACTION dgoods::burnnft(name owner,
         });
 
         // lower balance from owner
-        sub_balance(owner, dgood_stats.category_name_id, quantity);
+        _sub_balance(owner, dgood_stats.category_name_id, quantity);
 
         // erase token
         dgood_table.erase( token );
@@ -163,20 +174,17 @@ ACTION dgoods::burnft(name owner,
     stats_index stats_table( get_self(), acct.category.value );
     const auto& dgood_stats = stats_table.get( acct.token_name.value, "dgood stats not found" );
 
-    checkasset( quantity, true );
+    _checkasset( quantity, true );
     string string_precision = "precision of quantity must be " + to_string( dgood_stats.max_supply.symbol.precision() );
     check( quantity.symbol == dgood_stats.max_supply.symbol, string_precision.c_str() );
     // lower balance from owner
-    sub_balance(owner, category_name_id, quantity);
+    _sub_balance(owner, category_name_id, quantity);
 
     // decrease current supply
     stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
         s.current_supply -= quantity;
     });
-
-
 }
-
 
 ACTION dgoods::transfernft(name from,
                            name to,
@@ -192,8 +200,7 @@ ACTION dgoods::transfernft(name from,
     // check memo size
     check( memo.size() <= 256, "memo has more than 256 bytes" );
 
-    changeowner( from, to, dgood_ids, memo, true );
-
+    _changeowner( from, to, dgood_ids, memo, true );
 }
 
 ACTION dgoods::transferft(name from,
@@ -221,12 +228,11 @@ ACTION dgoods::transferft(name from,
     check( dgood_stats.transferable == true, "not transferable");
     check( dgood_stats.fungible == true, "Must be fungible token");
 
-    checkasset( quantity, true );
+    _checkasset( quantity, true );
     string string_precision = "precision of quantity must be " + to_string( dgood_stats.max_supply.symbol.precision() );
     check( quantity.symbol == dgood_stats.max_supply.symbol, string_precision.c_str() );
-    sub_balance(from, dgood_stats.category_name_id, quantity);
-    add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
-
+    _sub_balance(from, dgood_stats.category_name_id, quantity);
+    _add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 }
 
 ACTION dgoods::listsalenft(name seller,
@@ -256,7 +262,6 @@ ACTION dgoods::listsalenft(name seller,
         lock_table.emplace( seller, [&]( auto& l ) {
             l.dgood_id = dgood_id;
         });
-
     }
 
     ask_index ask_table( get_self(), get_self().value );
@@ -296,10 +301,10 @@ ACTION dgoods::closesalenft(name seller,
     }
 }
 
-ACTION dgoods::buynft(name from,
-                      name to,
-                      asset quantity,
-                      string memo) {
+void dgoods::buynft(name from,
+                    name to,
+                    asset quantity,
+                    string memo) {
     // allow EOS to be sent by sending with empty string memo
     if ( memo == "deposit" ) return;
     // don't allow spoofs
@@ -319,9 +324,11 @@ ACTION dgoods::buynft(name from,
     check ( ask.amount.amount == quantity.amount, "send the correct amount");
     check (ask.expiration > time_point_sec(current_time_point()), "sale has expired");
 
+    // take the fee and distribute to creators
+    auto paythese = _calcfees(ask.dgood_ids, quantity);
+
     // nft(s) bought, change owner to buyer regardless of transferable
-    //SEND_INLINE_ACTION( *this, changeowner, { { get_self(), "active"_n } }, { ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false } );
-    changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
+    _changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
 
     // if seller is contract, no need to send EOS again
     if ( ask.seller != get_self() ) {
@@ -346,7 +353,13 @@ ACTION dgoods::logcall(uint64_t dgood_id) {
 }
 
 // Private
-void dgoods::changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
+map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount) {
+    map<name, asset> paythese;
+    return paythese;
+}
+
+// Private
+void dgoods::_changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
     // loop through vector of dgood_ids, check token exists
     dgood_index dgood_table( get_self(), get_self().value );
     lock_index lock_table( get_self(), get_self().value );
@@ -372,13 +385,13 @@ void dgoods::changeowner(name from, name to, vector<uint64_t> dgood_ids, string 
 
         // amount 1, precision 0 for NFT
         asset quantity(1, dgood_stats.max_supply.symbol);
-        sub_balance(from, dgood_stats.category_name_id, quantity);
-        add_balance(to, get_self(), token.category, token.token_name, dgood_stats.category_name_id, quantity);
+        _sub_balance(from, dgood_stats.category_name_id, quantity);
+        _add_balance(to, get_self(), token.category, token.token_name, dgood_stats.category_name_id, quantity);
     }
 }
 
 // Private
-void dgoods::checkasset(asset amount, bool fungible) {
+void dgoods::_checkasset(asset amount, bool fungible) {
     auto sym = amount.symbol;
     if (fungible) {
         check( amount.amount > 0, "amount must be positive" );
@@ -394,7 +407,7 @@ void dgoods::checkasset(asset amount, bool fungible) {
 }
 
 // Private
-void dgoods::mint(name to,
+void dgoods::_mint(name to,
                   name issuer,
                   name category,
                   name token_name,
@@ -422,11 +435,10 @@ void dgoods::mint(name to,
         });
     }
     SEND_INLINE_ACTION( *this, logcall, { { get_self(), "active"_n } }, { dgood_id } );
-
 }
 
 // Private
-void dgoods::add_balance(name owner, name ram_payer, name category, name token_name,
+void dgoods::_add_balance(name owner, name ram_payer, name category, name token_name,
                          uint64_t category_name_id, asset quantity) {
     account_index to_account( get_self(), owner.value );
     auto acct = to_account.find( category_name_id );
@@ -445,7 +457,7 @@ void dgoods::add_balance(name owner, name ram_payer, name category, name token_n
 }
 
 // Private
-void dgoods::sub_balance(name owner, uint64_t category_name_id, asset quantity) {
+void dgoods::_sub_balance(name owner, uint64_t category_name_id, asset quantity) {
 
     account_index from_account( get_self(), owner.value );
     const auto& acct = from_account.get( category_name_id, "token does not exist in account" );

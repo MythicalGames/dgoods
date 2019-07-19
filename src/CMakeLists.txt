@@ -1,4 +1,5 @@
 project(dgoods)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)

@@ -84,28 +84,6 @@
             ]
         },
         {
-            "name": "buynft",
-            "base": "",
-            "fields": [
-                {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "to",
-                    "type": "name"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
-                }
-            ]
-        },
-        {
             "name": "categoryinfo",
             "base": "",
             "fields": [
@@ -138,6 +116,10 @@
                     "type": "name"
                 },
                 {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
                     "name": "category",
                     "type": "name"
                 },
@@ -160,6 +142,10 @@
                 {
                     "name": "transferable",
                     "type": "bool"
+                },
+                {
+                    "name": "split_frac",
+                    "type": "float32"
                 },
                 {
                     "name": "base_uri",
@@ -226,6 +212,10 @@
                     "type": "name"
                 },
                 {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
                     "name": "token_name",
                     "type": "name"
                 },
@@ -244,6 +234,10 @@
                 {
                     "name": "issued_supply",
                     "type": "asset"
+                },
+                {
+                    "name": "split_frac",
+                    "type": "float32"
                 },
                 {
                     "name": "base_uri",
@@ -417,11 +411,6 @@
         {
             "name": "burnnft",
             "type": "burnnft",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "buynft",
-            "type": "buynft",
             "ricardian_contract": ""
         },
         {
