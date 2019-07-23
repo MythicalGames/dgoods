@@ -28,14 +28,14 @@ CONTRACT dgoods: public contract {
 
 
         ACTION create(name issuer,
-                      name creator,
+                      name rev_partner,
                       name category,
                       name token_name,
                       bool fungible,
                       bool burnable,
                       bool sellable,
                       bool transferable,
-                      float split_frac,
+                      float rev_split,
                       string base_uri,
                       asset max_supply);
 
@@ -116,13 +116,13 @@ CONTRACT dgoods: public contract {
             bool     sellable;
             bool     transferable;
             name     issuer;
-            name     creator;
+            name     rev_partner;
             name     token_name;
             uint64_t category_name_id;
             asset    max_supply;
             asset    current_supply;
             asset    issued_supply;
-            float    split_frac;
+            float    rev_split;
             string   base_uri;
 
             uint64_t primary_key() const { return token_name.value; }

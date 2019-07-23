@@ -16,14 +16,14 @@ ACTION dgoods::setconfig(symbol_code sym, string version) {
 }
 
 ACTION dgoods::create(name issuer,
-                      name creator,
+                      name rev_partner,
                       name category,
                       name token_name,
                       bool fungible,
                       bool burnable,
                       bool sellable,
                       bool transferable,
-                      float split_frac,
+                      float rev_split,
                       string base_uri,
                       asset max_supply) {
 
@@ -33,9 +33,9 @@ ACTION dgoods::create(name issuer,
     _checkasset( max_supply, fungible );
     // check if issuer account exists
     check( is_account( issuer ), "issuer account does not exist" );
-    check( is_account( creator ), "creator account does not exist" );
+    check( is_account( rev_partner), "rev_partner account does not exist" );
     // check split frac is between 0 and 1
-    check( ( split_frac <= 1.0 ) && (split_frac >= 0.0), "split_frac must be between 0 and 1" );
+    check( ( rev_split <= 1.0 ) && (rev_split >= 0.0), "rev_split must be between 0 and 1" );
 
     // get category_name_id
     config_index config_table( get_self(), get_self().value );
@@ -65,7 +65,7 @@ ACTION dgoods::create(name issuer,
     stats_table.emplace( get_self(), [&]( auto& stats ) {
         stats.category_name_id = category_name_id;
         stats.issuer = issuer;
-        stats.creator = creator;
+        stats.rev_partner= rev_partner;
         stats.token_name = token_name;
         stats.fungible = fungible;
         stats.burnable = burnable;
@@ -73,7 +73,7 @@ ACTION dgoods::create(name issuer,
         stats.transferable = transferable;
         stats.current_supply = current_supply;
         stats.issued_supply = issued_supply;
-        stats.split_frac = split_frac;
+        stats.rev_split = rev_split;
         stats.base_uri = base_uri;
         stats.max_supply = max_supply;
     });

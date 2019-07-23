@@ -116,7 +116,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "creator",
+                    "name": "rev_partner",
                     "type": "name"
                 },
                 {
@@ -144,7 +144,7 @@
                     "type": "bool"
                 },
                 {
-                    "name": "split_frac",
+                    "name": "rev_split",
                     "type": "float32"
                 },
                 {
@@ -212,7 +212,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "creator",
+                    "name": "rev_partner",
                     "type": "name"
                 },
                 {
@@ -236,7 +236,7 @@
                     "type": "asset"
                 },
                 {
-                    "name": "split_frac",
+                    "name": "rev_split",
                     "type": "float32"
                 },
                 {
