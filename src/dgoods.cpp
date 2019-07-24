@@ -325,24 +325,22 @@ void dgoods::buynft(name from,
     check ( ask.amount.amount == quantity.amount, "send the correct amount");
     check (ask.expiration > time_point_sec(current_time_point()), "sale has expired");
 
-    // calculate amounts owed to all parties
-    map<name, asset> fee_map = _calcfees(ask.dgood_ids, ask.amount, ask.seller);
-    for(auto const& fee : fee_map) {
-        print("\n");
-        print(fee.first);
-        print("\n");
-        print(fee.second);
-        print("\n");
-    }
-
     // nft(s) bought, change owner to buyer regardless of transferable
     _changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
 
-    // if seller is contract, no need to send EOS again
-    if ( ask.seller != get_self() ) {
-        // send EOS to seller
-        action( permission_level{ get_self(), name("active") }, name("eosio.token"), name("transfer"),
-            make_tuple( get_self(), ask.seller, quantity, string("listing sold"))).send();
+    // amounts owed to all parties
+    map<name, asset> fee_map = _calcfees(ask.dgood_ids, ask.amount, ask.seller);
+    for(auto const& fee : fee_map) {
+        auto account = fee.first;
+        auto amount = fee.second;
+
+        // if seller is contract, no need to send EOS again
+        if ( account != get_self() ) {
+            // send EOS to account owed
+            action( permission_level{ get_self(), name("active") },
+                    name("eosio.token"), name("transfer"),
+                    make_tuple( get_self(), account, amount, string("sale of dgood") ) ).send();
+        }
     }
 
     // remove locks, remove from ask table
