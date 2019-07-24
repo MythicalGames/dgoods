@@ -1,4 +1,5 @@
 #include <dgoods.hpp>
+#include <math.h>
 
 ACTION dgoods::setconfig(symbol_code sym, string version) {
 
@@ -23,7 +24,7 @@ ACTION dgoods::create(name issuer,
                       bool burnable,
                       bool sellable,
                       bool transferable,
-                      float rev_split,
+                      double rev_split,
                       string base_uri,
                       asset max_supply) {
 
@@ -324,8 +325,15 @@ void dgoods::buynft(name from,
     check ( ask.amount.amount == quantity.amount, "send the correct amount");
     check (ask.expiration > time_point_sec(current_time_point()), "sale has expired");
 
-    // take the fee and distribute to creators
-    auto paythese = _calcfees(ask.dgood_ids, quantity);
+    // calculate amounts owed to all parties
+    map<name, asset> fee_map = _calcfees(ask.dgood_ids, ask.amount, ask.seller);
+    for(auto const& fee : fee_map) {
+        print("\n");
+        print(fee.first);
+        print("\n");
+        print(fee.second);
+        print("\n");
+    }
 
     // nft(s) bought, change owner to buyer regardless of transferable
     _changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
@@ -344,6 +352,7 @@ void dgoods::buynft(name from,
         const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
         lock_table.erase( locked_nft );
     }
+    // remove sale listing
     ask_table.erase( ask );
 }
 
@@ -353,9 +362,36 @@ ACTION dgoods::logcall(uint64_t dgood_id) {
 }
 
 // Private
-map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount) {
-    map<name, asset> paythese;
-    return paythese;
+map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller) {
+    map<name, asset> fee_map;
+    dgood_index dgood_table( get_self(), get_self().value );
+    int64_t tot_fees = 0;
+    for ( auto const& dgood_id: dgood_ids ) {
+        const auto& token = dgood_table.get( dgood_id, "token does not exist" );
+
+        stats_index stats_table( get_self(), token.category.value );
+        const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
+
+        name rev_partner = dgood_stats.rev_partner;
+        if ( dgood_stats.rev_split == 0.0 ) {
+            continue;
+        }
+
+        double fee = static_cast<double>(ask_amount.amount) * dgood_stats.rev_split / static_cast<double>( dgood_ids.size() );
+        asset fee_asset(fee, ask_amount.symbol);
+        auto ret_val = fee_map.insert({rev_partner, fee_asset});
+        tot_fees += fee_asset.amount;
+        if ( ret_val.second == false ) {
+            fee_map[rev_partner] += fee_asset;
+        }
+    }
+    //add seller to fee_map minus fees
+    asset seller_amount(ask_amount.amount - tot_fees, ask_amount.symbol);
+    auto ret_val = fee_map.insert({seller, seller_amount});
+    if ( ret_val.second == false ) {
+        fee_map[seller] += seller_amount;
+    }
+    return fee_map;
 }
 
 // Private

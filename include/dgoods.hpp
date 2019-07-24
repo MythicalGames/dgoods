@@ -35,7 +35,7 @@ CONTRACT dgoods: public contract {
                       bool burnable,
                       bool sellable,
                       bool transferable,
-                      float rev_split,
+                      double rev_split,
                       string base_uri,
                       asset max_supply);
 
@@ -122,7 +122,7 @@ CONTRACT dgoods: public contract {
             asset    max_supply;
             asset    current_supply;
             asset    issued_supply;
-            float    rev_split;
+            double   rev_split;
             string   base_uri;
 
             uint64_t primary_key() const { return token_name.value; }
@@ -171,7 +171,7 @@ CONTRACT dgoods: public contract {
         using lock_index = multi_index< "lockednfts"_n, lockednfts>;
 
       private:
-        map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount);
+        map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller);
         void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
         void _checkasset( asset amount, bool fungible );
         void _mint(name to, name issuer, name category, name token_name,

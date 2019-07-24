@@ -145,7 +145,7 @@
                 },
                 {
                     "name": "rev_split",
-                    "type": "float32"
+                    "type": "float64"
                 },
                 {
                     "name": "base_uri",
@@ -237,7 +237,7 @@
                 },
                 {
                     "name": "rev_split",
-                    "type": "float32"
+                    "type": "float64"
                 },
                 {
                     "name": "base_uri",
