@@ -3,7 +3,7 @@ dGoods: Digital Goods Token Spec v0.4beta
 
 Cameron Thacker, Stephan Cunningham, Rudy Koch, John Linden
 
-[@Mythical Games](https://mythical.games/) 
+[@Mythical Games](https://mythical.games/)
 
 
     Copyright (C) 2019 MYTHICAL GAMES.
@@ -58,15 +58,15 @@ ACTION setconfig(symbol_code sym, string version);
 
 **CREATE**: The create method instantiates a token. This is required
 before any tokens can be issued and sets properties such as the
-category, name, maximum supply, who has the ability to issue tokens, and
+category, name, maximum supply, rev split, who has the ability to issue tokens, and
 if the token is fungible or not etc. Name type is a string 12 characters
 max a-z, 1-5. Max supply is given as an eosio asset. For non fungible
 tokens, precision must be 0 (you must use ints). The symbol in the asset
 must match the symbol in `setconfig`.
 
 ```c++
-ACTION create(name issuer, name category, name token_name, bool fungible, bool
-              burnable, bool sellable, bool transferable, string base_uri, asset max_supply);
+ACTION create(name issuer, name rev_partner, name category, name token_name, bool fungible, bool
+burnable, bool sellable, bool transferable, double rev_split, string base_uri, asset max_supply);
 ```
 
 **ISSUE**: The issue method mints a token and gives ownership to the
@@ -89,7 +89,7 @@ ACTION pausexfer(bool pause);
 ```
 
 **BURNNFT**: Burn method destroys specified tokens and frees the RAM.
-Only owner may call burn function and burnable must be true.
+Only owner may call burn function, burnable must be true, and token must not be locked
 
 ```c++
 ACTION burnnft(name owner, vector<uint64_t> dgood_ids);
@@ -120,19 +120,19 @@ may call and transferrable must be true.
 ACTION transferft(name from, name to, name category, name token_name, asset quantity, string memo);
 ```
 
-**LISTSALENFT**: Used to list an nft for sale in the token contract itself. Callable only by owner,
+**LISTSALENFT**: Used to list nfts for sale in the token contract itself. Callable only by owner,
 if sellable is true and token not locked, creates sale listing in the token contract, marks token as
-not transferable while listed for sale
+not transferable while listed for sale. An array of dgood_ids is required.
 
 ```c++
-ACTION listsalenft(name seller, uint64_t dgood_id, asset net_sale_amount);
+ACTION listsalenft(name seller, vector<uint64_t> dgood_ids, asset net_sale_amount);
 ```
 
 **CLOSESALENFT**: Callable by seller if listing hasn't expired, or anyone if the listing is expired;
 will remove listing, remove lock and return nft to seller
 
 ```c++
-ACTION closesalenft(name seller, uint64_t dgood_id);
+ACTION closesalenft(name seller, uint64_t batch_id);
 ```
 
 Token Data
@@ -179,13 +179,15 @@ TABLE dgoodstats {
     bool     sellable;
     bool     transferable;
     name     issuer;
+    name     rev_partner;
     name     token_name;
     uint64_t category_name_id;
     asset    max_supply;
     asset    current_supply;
     asset    issued_supply;
+    double   rev_split;
     string   base_uri;
-     
+
     uint64_t primary_key() const { return token_name.value; }
 };
 ```
@@ -205,10 +207,10 @@ TABLE dgood {
     name category;
     name token_name;
     std::optional<string> relative_uri;
-    
+
     uint64_t primary_key() const { return id; }
     uint64_t get_owner() const { return owner.value; }
-};   
+};
 EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri) )
 ```
 
@@ -234,14 +236,15 @@ Holds listings for sale in the built in decentralized exchange (DEX)
 ```c++
 // scope is self
 TABLE asks {
-  uint64_t dgood_id;
+  uint64_t batch_id;
+  vector<uint64_t> dgood_ids;
   name seller;
   asset amount;
   time_point_sec expiration;
 
-  uint64_t primary_key() const { return dgood_id; }
+  uint64_t primary_key() const { return batch_id; }
   uint64_t get_seller() const { return seller.value; }
-};    
+};
 ```
 
 Locked NFT Table
@@ -255,7 +258,7 @@ TABLE lockednfts {
   uint64_t dgood_id;
 
   uint64_t primary_key() const { return dgood_id; }
-};    
+};
 ```
 
 Account Table
@@ -271,9 +274,9 @@ TABLE accounts {
     name category;
     name token_name;
     asset amount;
-    
+
     uint64_t primary_key() const { return category_name_id; }
-}; 
+};
 ```
 
 Metadata Templates
@@ -287,49 +290,44 @@ exercise. We want to provide a repository of templates that are agreed
 upon by the community. All metadata is formatted as JSON objects
 specified from the template types.
 
-To accommodate multiple languages, the metadata is an array of JSON
-objects each with a unique language code and translation that can easily
-be filtered on. All keys are in English, but values can be in whatever
-language specified by the `lang` field.
-
 Type: 3dgameAsset
 -----------------
 
-    [{                 
+    {
       // Required Fields
-      "lang": string; two-letter code specified in the ISO 639-1 language standard
+      "type": string; "3dgameAsset"
       "name": string; identifies the asset the token represents
       "description": string; short description of the asset the token represents
-      "imageSmall": URI pointing to image resource size 150 x 150 
+      "imageSmall": URI pointing to image resource size 150 x 150
       "imageLarge": URI pointing to image resource size 1024 x 1024
       "3drender": URI pointing to js webgl for rendering 3d object
       "details": Key Value pairs to render in a detail view, could be things like {"strength": 5}
       // Optional Fields
       "authenticityImage": URI pointing to resource with mime type image representing certificate of authenticity
-    }]
+    }
 
 Type: 2dgameAsset
 -----------------
 
-    [{
+    {
       // Required Fields
-      "lang": string; two-letter code specified in the ISO 639-1 language standard
+      "type": string; "2dgameAsset"
       "name": string; identifies the asset the token represents
       "description": string; short description of the asset the token represents
-      "imageSmall": URI pointing to image resource size 150 x 150 
+      "imageSmall": URI pointing to image resource size 150 x 150
       "imageLarge": URI pointing to image resource size 1024 x 1024
       "details": Key Value pairs to render in a detail view, could be things like {"strength": 5}
       // Optional Fields
       "authenticityImage": URI pointing to resource with mime type image representing certificate of authenticity
-    }]
+    }
 
 
 Type: ticket
 ------------
 
-    [{
+    {
       // Required Fields
-      "lang": string; two-letter code specified in the ISO 639-1 language standard
+      "type": string; "ticket"
       "name": string; identifies the event the ticket is for
       "description": string; short description of the event the ticket is for
       "location": string; name of the location where the event is being held
@@ -344,34 +342,34 @@ Type: ticket
       "duration": string; length of time the event lasts for
       "row": string; row where seat is located
       "seat": string; seat number or GA for General Admission
-    }]
+    }
 
 Type: art
 ---------
 
-    [{
+    {
       // Required Fields
-      "lang": string; two-letter code specified in the ISO 639-1 language standard
+      "type": string; "art"
       "name": string; identifies the asset the token represents
       "description": string; short description of the asset the token represents
       "creator": string; creator(s) of the art
-      "imageSmall": URI pointing to image resource size 150 x 150 
+      "imageSmall": URI pointing to image resource size 150 x 150
       "imageLarge": URI pointing to image resource size 1024 x 1024
       "date": unix time; date artwork was created
       "details": Key Value pairs to render in a detail view, could be things like {"materials": ["oil", "wood"], "location": "Norton Simon Museum"}
       // Optional Fields
       "authenticityImage": URI pointing to resource with mime type image representing certificate of authenticity or signature
-    }]
+    }
 
 Type: jewelry
 -------------
 
-    [{
+    {
       //Required Fields
-      "lang": string; two-letter code specified in the ISO 639-1 language standard
+      "type": string; "jewelry"
       "name": string; identifies the watch the token represents
       "description": string; short description of the watch the token represents
-      "imageSmall": URI pointing to image resource size 150 x 150 
+      "imageSmall": URI pointing to image resource size 150 x 150
       "imageLarge": URI pointing to image resource size 1024 x 1024
       "image360": URI pointing to image resource for 360 image
       "manufactureDate": Unix time; date watch was manufactured
@@ -379,7 +377,7 @@ Type: jewelry
       "details": Key Value pairs to render in a detail view, could be things like {"caret": 1}
       //Optional Fields
       "authenticityImage": URI pointing to resource with mime type image representing certificate of authenticity
-    }]
+    }
 
 Definitions
 ===========
