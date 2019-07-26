@@ -26,7 +26,6 @@ CONTRACT dgoods: public contract {
         ACTION setconfig(symbol_code symbol,
                          string version);
 
-
         ACTION create(name issuer,
                       name rev_partner,
                       name category,

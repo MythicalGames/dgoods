@@ -28,6 +28,24 @@ different metadata
 Changes
 =======
 
+v1.0
+----
+
+
+* general bug fixes
+* removed custom dasset type in favor of standard asset type
+* removed inline actions in most places to comply with EOS 1.8 changes
+* add sellable flag
+* ex transferable=false, sellable=true, can still trade in fact becomes only way to effectively transfer item
+* add locking mechanism for use when selling and for future use in renting
+  - enables listing for sale while keeping item until sell occurs
+* `issue` function made batch
+* `listsalenft` now batch as well
+  - can sell multiple dgoods in one batch
+* enable configurable fee per token type used in sale 
+  - enables an artist or creator to benefit from the resale market
+
+
 v0.4
 ----
 
