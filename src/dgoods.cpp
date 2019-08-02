@@ -111,9 +111,12 @@ ACTION dgoods::issue(name to,
 
     if (dgood_stats.fungible == false) {
         if ( quantity.amount > 1 ) {
+            asset issued_supply = dgood_stats.issued_supply;
+            asset one_token = asset( 1, dgood_stats.max_supply.symbol);
             for ( uint64_t i = 1; i <= quantity.amount; i++ ) {
                 _mint(to, dgood_stats.issuer, category, token_name,
-                     dgood_stats.issued_supply, relative_uri);
+                      issued_supply, relative_uri);
+                issued_supply += one_token;
             }
         } else {
             _mint(to, dgood_stats.issuer, category, token_name,
