@@ -63,7 +63,7 @@ cleos push action dgood.token create '{"issuer": "dgood.token",
                                        "transferable": false,
                                        "rev_split": 0.05,
                                        "base_uri": "https://myticketingsite.com/concert1/ticket1/",
-                                       "max_supply": "1000 TCKT"}'
+                                       "max_supply": "1000 TCKT"}' -p dgood.token
 ```
 Here we created a type of token that could be a hypothetical concert ticket with a max supply of 1000. 
 * They are nonfungible since each of these tickets will have their own assigned seat. 
@@ -84,7 +84,7 @@ cleos push action dgood.token issue '{"to": "someaccount",
                                       "token_name": "ticket1",
                                       "quantity": "5 TCKT",
                                       "relative_uri": "",
-                                      "memo": "Enjoy the concert!"}'
+                                      "memo": "Enjoy the concert!"}' -p dgood.token
 ```
 
 * Notice quantity is an asset and requires a precision match
@@ -192,11 +192,6 @@ Finally, let's query the account of `someaccount`
 }
 ```
 
-
-
-
-
-
 #### transfernft
 
 If the token is transferable (this example is not) the owner of the token can transfer it to another
@@ -205,8 +200,8 @@ account by specifying the tokens to transfer by their dgood_id.
 ```
 cleos push action dgood.token transfernft '{"from": "someaccount",
                                             "to": "afriendacct",
-                                            "dgood_ids": "[0,1]",
-                                            "memo": "got your tickets!"}'
+                                            "dgood_ids": [0,1],
+                                            "memo": "got your tickets!"}' -p someaccount
 ```
 
 Two tickets were transfered to the account "afriendacct" -- specifically the tickets with dgood_id 0
@@ -214,6 +209,91 @@ and 1.
 
 #### burnnft
 
+To burn one:
+
+```
+cleos push action dgood.token burnnft '{"owner": "someaccount",
+                                        "dgood_ids": [0]}' -p someaccount
+```
+
 #### listsalenft
 
-#### purchasing a sale
+One of the biggest features of dgoods is the built in exchange. To list a dgood for sale you simply
+call:
+
+```
+cleos push action dgood.token listsalenft '{"seller": "someaccount",
+                                            "dgood_ids": [0],
+                                            "net_sale_amount": "1.0000 EOS"}' -p someaccount
+```
+We have litsted the ticket with dgood_id == 0 for 1.0000 EOS. Now anyone can query the contract and
+see that this is listed for sale.
+
+`cleos get table dgood.token dgood.token asks`
+
+```
+{
+  "rows": [{
+      "batch_id": 0,
+      "dgood_ids": [
+        0
+      ],
+      "seller": "atestertest1",
+      "amount": "1.0000 EOS",
+      "expiration": "2019-08-12T18:53:49"
+    }
+  ],
+  "more": false
+}
+```
+
+But maybe the user made a mistake and would rather list two tickets together. The user can then
+cancel the listing and relist two items.
+
+```
+cleos push action dgood.token closesalenft '{"seller": "someaccount",
+                                             "batch_id": 0}' -p someaccount
+```
+
+```
+cleos push action dgood.token listsalenft '{"seller": "someaccount",
+                                            "dgood_ids": [0, 1],
+                                            "net_sale_amount": "1.0000 EOS"}' -p someaccount
+``` 
+
+Now querying the asks table shows that both dgoods are listed in one batch.
+
+```
+{
+  "rows": [{
+      "batch_id": 0,
+      "dgood_ids": [
+        0,
+        1
+      ],
+      "seller": "atestertest1",
+      "amount": "2.0000 EOS",
+      "expiration": "2019-08-12T19:00:49"
+    }
+  ],
+  "more": false
+}
+```
+
+Something interseting to note is that for a listing of a single dgood, the `batch_id` will be the
+`dgood_id`. However, if the batch size is greater than 1 then `batch_id` will be the first
+`dgood_id` in the batch. There is no way to directly query if a dgood is in a specific batch without
+indexing all of the data in the asks table.
+
+#### purchasing a listing
+
+Finally to make a purchase, a user sends EOS to the dgoods contract with a memo in the form of
+"batch_id,to_acount". That is, you may buy on behalf of others as long as you specify which account
+you want the dgood to be transfered to -- of course in most cases the `to_account` will be your
+account.
+
+Using a shorthand for EOS transfers built into cleos:
+
+```
+cleos transfer buyeracct dgood.token "2.0000 EOS" "0,buyeracct" -p buyeracct
+```
