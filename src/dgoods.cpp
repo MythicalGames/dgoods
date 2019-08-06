@@ -94,6 +94,7 @@ ACTION dgoods::issue(name to,
 
     check( is_account( to ), "to account does not exist");
     check( memo.size() <= 256, "memo has more than 256 bytes" );
+    check( quantity.amount <= 100, "can issue 100 at a time");
 
     // dgoodstats table
     stats_index stats_table( get_self(), category.value );
@@ -136,6 +137,7 @@ ACTION dgoods::burnnft(name owner,
                        vector<uint64_t> dgood_ids) {
     require_auth(owner);
 
+    check( dgood_ids.size() <= 20, "max batch size of 20" );
     // loop through vector of dgood_ids, check token exists
     lock_index lock_table( get_self(), get_self().value );
     dgood_index dgood_table( get_self(), get_self().value );
@@ -194,6 +196,8 @@ ACTION dgoods::transfernft(name from,
                            name to,
                            vector<uint64_t> dgood_ids,
                            string memo ) {
+
+    check( dgood_ids.size() <= 20, "max batch size of 20" );
     // ensure authorized to send from account
     check( from != to, "cannot transfer to self" );
     require_auth( from );
@@ -244,6 +248,7 @@ ACTION dgoods::listsalenft(name seller,
                            asset net_sale_amount) {
     require_auth( seller );
 
+    check (dgood_ids.size() <= 20, "max batch size of 20");
     check( net_sale_amount.amount > .02, "minimum price of at least 0.02 EOS");
     check( net_sale_amount.symbol == symbol( symbol_code("EOS"), 4), "only accept EOS for sale" );
 
@@ -397,6 +402,7 @@ map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount,
 
 // Private
 void dgoods::_changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
+    check (dgood_ids.size() <= 20, "max batch size of 20");
     // loop through vector of dgood_ids, check token exists
     dgood_index dgood_table( get_self(), get_self().value );
     lock_index lock_table( get_self(), get_self().value );
