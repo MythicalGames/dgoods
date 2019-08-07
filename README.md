@@ -22,11 +22,41 @@ different metadata
 
 ---
 
-[View the latest spec](dgoods_spec.md)
+[View the Latest Spec](dgoods_spec.md)
 ======================================
+[Basic Usage Tutorial](example_usage.md)
+========================================
 
 Changes
 =======
+
+v1.0
+----
+
+Many changes have occured since v0.4 that made it into the 1.0 release. Some of these changes are
+not backwards compatible since changes were made to multiple tables' structure. It is recommended to
+start from a fresh contract rather than try and migrate data to the new version.
+
+We have a [basic usage tutorial](example_usage.md)
+
+General
+
+* general bug fixes
+* removed custom dasset type in favor of standard asset type
+* removed inline actions in most places to comply with EOS 1.8 changes
+* `issue` function made batch
+
+Added Features
+
+* add sellable flag
+* ex. transferable=false, sellable=true, can still trade; in fact becomes only way to effectively transfer item
+* add locking mechanism for use when selling and for future use in renting
+  - enables listing for sale while keeping item until sell occurs
+* enable configurable fee per token type used in sale
+  - enables an artist or creator to benefit from the resale market
+* `listsalenft` now batch as well
+  - can list multiple dgoods for sale as a batch
+
 
 v0.4
 ----
@@ -83,25 +113,25 @@ Misc
 
 
 v0.2
-----      
+----
 
 * contract implementation shared with collaborating teams for feedback/security checks
 
 Token config
 
-* renamed `symbolinfo` table to `tokenconfigs` 
+* renamed `symbolinfo` table to `tokenconfigs`
 * added name of the standard (dgoods), version, and changed symbol type to symbol_code
 * added corresponding method called `setconfig` to set the symbol and version
 
 Asset / Quantities
 
-* introduce dasset type, similar to EOS asset but without unnecessary symbol 
+* introduce dasset type, similar to EOS asset but without unnecessary symbol
 * dasset has functionality to convert from string
 * all quantities are passed in as strings and converted to a dasset type
 * precision is set similar to EOS asset and all numbers are converted to uint64_t
 
 Issuance
- 
+
 * `issue` now takes a metadata_type
 * `tokeninfo` table adds metadata_type onto the token instead of just in the metadata itself
 

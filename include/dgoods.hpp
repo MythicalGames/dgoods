@@ -8,11 +8,11 @@
 #include <string>
 #include <vector>
 
-#include "dasset.hpp"
+#include "utility.hpp"
 
 using namespace std;
 using namespace eosio;
-using namespace dgoods_asset;
+using namespace utility;
 
 CONTRACT dgoods: public contract {
     public:
@@ -26,20 +26,22 @@ CONTRACT dgoods: public contract {
         ACTION setconfig(symbol_code symbol,
                          string version);
 
-
         ACTION create(name issuer,
+                      name rev_partner,
                       name category,
                       name token_name,
                       bool fungible,
                       bool burnable,
+                      bool sellable,
                       bool transferable,
+                      double rev_split,
                       string base_uri,
-                      string max_supply);
+                      asset max_supply);
 
         ACTION issue(name to,
                      name category,
                      name token_name,
-                     string quantity,
+                     asset quantity,
                      string relative_uri,
                      string memo);
 
@@ -48,9 +50,9 @@ CONTRACT dgoods: public contract {
 
         ACTION burnft(name owner,
                       uint64_t category_name_id,
-                      string quantity);
+                      asset quantity);
 
-        ACTION buynft(name from, name to, asset quantity, string memo);
+        void buynft(name from, name to, asset quantity, string memo);
 
         ACTION transfernft(name from,
                            name to,
@@ -61,27 +63,34 @@ CONTRACT dgoods: public contract {
                           name to,
                           name category,
                           name token_name,
-                          string quantity,
+                          asset quantity,
                           string memo);
 
         ACTION listsalenft(name seller,
-                           uint64_t dgood_id,
+                           vector<uint64_t> dgood_ids,
                            asset net_sale_amount);
 
         ACTION closesalenft(name seller,
-                            uint64_t dgood_id);
+                            uint64_t batch_id);
 
         ACTION logcall(uint64_t dgood_id);
+
+        TABLE lockednfts {
+            uint64_t dgood_id;
+
+            uint64_t primary_key() const { return dgood_id; }
+        };
 
         // now() gets current time in sec
         // uint32_t 604800 is 1 week in seconds
         TABLE asks {
-            uint64_t dgood_id;
+            uint64_t batch_id;
+            vector<uint64_t> dgood_ids;
             name seller;
             asset amount;
             time_point_sec expiration;
 
-            uint64_t primary_key() const { return dgood_id; }
+            uint64_t primary_key() const { return batch_id; }
             uint64_t get_seller() const { return seller.value; }
         };
 
@@ -101,16 +110,19 @@ CONTRACT dgoods: public contract {
 
         // scope is category, then token_name is unique
         TABLE dgoodstats {
-            bool    fungible;
-            bool    burnable;
-            bool    transferable;
-            name    issuer;
-            name    token_name;
+            bool     fungible;
+            bool     burnable;
+            bool     sellable;
+            bool     transferable;
+            name     issuer;
+            name     rev_partner;
+            name     token_name;
             uint64_t category_name_id;
-            dasset  max_supply;
-            uint64_t current_supply;
-            uint64_t issued_supply;
-            string base_uri;
+            asset    max_supply;
+            asset    current_supply;
+            asset    issued_supply;
+            double   rev_split;
+            string   base_uri;
 
             uint64_t primary_key() const { return token_name.value; }
         };
@@ -136,7 +148,7 @@ CONTRACT dgoods: public contract {
             uint64_t category_name_id;
             name category;
             name token_name;
-            dasset amount;
+            asset amount;
 
             uint64_t primary_key() const { return category_name_id; }
         };
@@ -155,11 +167,15 @@ CONTRACT dgoods: public contract {
         using ask_index = multi_index< "asks"_n, asks,
             indexed_by< "byseller"_n, const_mem_fun< asks, uint64_t, &asks::get_seller> > >;
 
-      private:
+        using lock_index = multi_index< "lockednfts"_n, lockednfts>;
 
-        void mint(name to, name issuer, name category, name token_name,
-                  uint64_t issued_supply, string relative_uri);
-        void add_balance(name owner, name issuer, name category, name token_name,
-                         uint64_t category_name_id, dasset quantity);
-        void sub_balance(name owner, uint64_t category_name_id, dasset quantity);
+      private:
+        map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller);
+        void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
+        void _checkasset( asset amount, bool fungible );
+        void _mint(name to, name issuer, name category, name token_name,
+                  asset issued_supply, string relative_uri);
+        void _add_balance(name owner, name issuer, name category, name token_name,
+                         uint64_t category_name_id, asset quantity);
+        void _sub_balance(name owner, uint64_t category_name_id, asset quantity);
 };

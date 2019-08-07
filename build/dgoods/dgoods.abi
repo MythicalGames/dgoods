@@ -21,7 +21,7 @@
                 },
                 {
                     "name": "amount",
-                    "type": "dasset"
+                    "type": "asset"
                 }
             ]
         },
@@ -30,8 +30,12 @@
             "base": "",
             "fields": [
                 {
-                    "name": "dgood_id",
+                    "name": "batch_id",
                     "type": "uint64"
+                },
+                {
+                    "name": "dgood_ids",
+                    "type": "uint64[]"
                 },
                 {
                     "name": "seller",
@@ -61,7 +65,7 @@
                 },
                 {
                     "name": "quantity",
-                    "type": "string"
+                    "type": "asset"
                 }
             ]
         },
@@ -76,28 +80,6 @@
                 {
                     "name": "dgood_ids",
                     "type": "uint64[]"
-                }
-            ]
-        },
-        {
-            "name": "buynft",
-            "base": "",
-            "fields": [
-                {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "to",
-                    "type": "name"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
                 }
             ]
         },
@@ -120,7 +102,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "dgood_id",
+                    "name": "batch_id",
                     "type": "uint64"
                 }
             ]
@@ -131,6 +113,10 @@
             "fields": [
                 {
                     "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "rev_partner",
                     "type": "name"
                 },
                 {
@@ -150,8 +136,16 @@
                     "type": "bool"
                 },
                 {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
                     "name": "transferable",
                     "type": "bool"
+                },
+                {
+                    "name": "rev_split",
+                    "type": "float64"
                 },
                 {
                     "name": "base_uri",
@@ -159,21 +153,7 @@
                 },
                 {
                     "name": "max_supply",
-                    "type": "string"
-                }
-            ]
-        },
-        {
-            "name": "dasset",
-            "base": "",
-            "fields": [
-                {
-                    "name": "amount",
-                    "type": "uint64"
-                },
-                {
-                    "name": "precision",
-                    "type": "uint8"
+                    "type": "asset"
                 }
             ]
         },
@@ -220,11 +200,19 @@
                     "type": "bool"
                 },
                 {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
                     "name": "transferable",
                     "type": "bool"
                 },
                 {
                     "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "rev_partner",
                     "type": "name"
                 },
                 {
@@ -237,15 +225,19 @@
                 },
                 {
                     "name": "max_supply",
-                    "type": "dasset"
+                    "type": "asset"
                 },
                 {
                     "name": "current_supply",
-                    "type": "uint64"
+                    "type": "asset"
                 },
                 {
                     "name": "issued_supply",
-                    "type": "uint64"
+                    "type": "asset"
+                },
+                {
+                    "name": "rev_split",
+                    "type": "float64"
                 },
                 {
                     "name": "base_uri",
@@ -271,7 +263,7 @@
                 },
                 {
                     "name": "quantity",
-                    "type": "string"
+                    "type": "asset"
                 },
                 {
                     "name": "relative_uri",
@@ -292,12 +284,22 @@
                     "type": "name"
                 },
                 {
-                    "name": "dgood_id",
-                    "type": "uint64"
+                    "name": "dgood_ids",
+                    "type": "uint64[]"
                 },
                 {
                     "name": "net_sale_amount",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "lockednfts",
+            "base": "",
+            "fields": [
+                {
+                    "name": "dgood_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -369,7 +371,7 @@
                 },
                 {
                     "name": "quantity",
-                    "type": "string"
+                    "type": "asset"
                 },
                 {
                     "name": "memo",
@@ -409,11 +411,6 @@
         {
             "name": "burnnft",
             "type": "burnnft",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "buynft",
-            "type": "buynft",
             "ricardian_contract": ""
         },
         {
@@ -489,6 +486,13 @@
         {
             "name": "dgoodstats",
             "type": "dgoodstats",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "lockednfts",
+            "type": "lockednfts",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

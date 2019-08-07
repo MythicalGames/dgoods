@@ -33,17 +33,17 @@ namespace utility {
     }
 
     tuple<uint64_t, name> parsememo(const string& memo) {
-        auto dot_pos = memo.find(',');
-        string errormsg = "malformed memo: must have dgood_id,to_account";
-        check ( dot_pos != string::npos, errormsg.c_str() );
-        if ( dot_pos != string::npos ) {
-            check( ( dot_pos != memo.size() - 1 ), errormsg.c_str() );
+        auto comma_pos = memo.find(',');
+        string errormsg = "malformed memo: must have batch_id,to_account";
+        check ( comma_pos != string::npos, errormsg.c_str() );
+        if ( comma_pos != string::npos ) {
+            check( ( comma_pos != memo.size() - 1 ), errormsg.c_str() );
         }
         // will abort if stoull throws error since wasm no error checking
-        uint64_t dgood_id = stoull( trim( memo.substr( 0, dot_pos ) ) );
-        name to_account = name( trim ( memo.substr( dot_pos + 1 ) ) );
+        uint64_t batch_id = stoull( trim( memo.substr( 0, comma_pos ) ) );
+        name to_account = name( trim ( memo.substr( comma_pos + 1 ) ) );
 
-        return make_tuple(dgood_id, to_account);
+        return make_tuple(batch_id, to_account);
 
     }
 }
