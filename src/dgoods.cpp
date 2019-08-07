@@ -94,7 +94,7 @@ ACTION dgoods::issue(name to,
 
     check( is_account( to ), "to account does not exist");
     check( memo.size() <= 256, "memo has more than 256 bytes" );
-    check( quantity.amount <= 100, "can issue 100 at a time");
+
 
     // dgoodstats table
     stats_index stats_table( get_self(), category.value );
@@ -111,6 +111,7 @@ ACTION dgoods::issue(name to,
     check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply.amount), "Cannot issue more than max supply" );
 
     if (dgood_stats.fungible == false) {
+        check( quantity.amount <= 100, "can issue 100 at a time");
         if ( quantity.amount > 1 ) {
             asset issued_supply = dgood_stats.issued_supply;
             asset one_token = asset( 1, dgood_stats.max_supply.symbol);
