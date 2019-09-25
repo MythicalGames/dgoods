@@ -23,57 +23,57 @@ CONTRACT dgoods: public contract {
         dgoods(name receiver, name code, datastream<const char*> ds)
             : contract(receiver, code, ds) {}
 
-        ACTION setconfig(symbol_code symbol,
-                         string version);
+        ACTION setconfig(const symbol_code& symbol,
+                         const string& version);
 
-        ACTION create(name issuer,
-                      name rev_partner,
-                      name category,
-                      name token_name,
-                      bool fungible,
-                      bool burnable,
-                      bool sellable,
-                      bool transferable,
-                      double rev_split,
-                      string base_uri,
-                      asset max_supply);
+        ACTION create(const name& issuer,
+                      const name& rev_partner,
+                      const name& category,
+                      const name& token_name,
+                      const bool& fungible,
+                      const bool& burnable,
+                      const bool& sellable,
+                      const bool& transferable,
+                      const double& rev_split,
+                      const string& base_uri,
+                      const asset& max_supply);
 
-        ACTION issue(name to,
-                     name category,
-                     name token_name,
-                     asset quantity,
-                     string relative_uri,
-                     string memo);
+        ACTION issue(const name& to,
+                     const name& category,
+                     const name& token_name,
+                     const asset& quantity,
+                     const string& relative_uri,
+                     const string& memo);
 
-        ACTION burnnft(name owner,
-                       vector<uint64_t> dgood_ids);
+        ACTION burnnft(const name& owner,
+                       const vector<uint64_t>& dgood_ids);
 
-        ACTION burnft(name owner,
-                      uint64_t category_name_id,
-                      asset quantity);
+        ACTION burnft(const name& owner,
+                      const uint64_t& category_name_id,
+                      const asset& quantity);
 
-        void buynft(name from, name to, asset quantity, string memo);
+        void buynft(const name& from, const name& to, const asset& quantity, const string& memo);
 
-        ACTION transfernft(name from,
-                           name to,
-                           vector<uint64_t> dgood_ids,
-                           string memo);
+        ACTION transfernft(const name& from,
+                           const name& to,
+                           const vector<uint64_t>& dgood_ids,
+                           const string& memo);
 
-        ACTION transferft(name from,
-                          name to,
-                          name category,
-                          name token_name,
-                          asset quantity,
-                          string memo);
+        ACTION transferft(const name& from,
+                          const name& to,
+                          const name& category,
+                          const name& token_name,
+                          const asset& quantity,
+                          const string& memo);
 
-        ACTION listsalenft(name seller,
-                           vector<uint64_t> dgood_ids,
-                           asset net_sale_amount);
+        ACTION listsalenft(const name& seller,
+                           const vector<uint64_t>& dgood_ids,
+                           const asset& net_sale_amount);
 
-        ACTION closesalenft(name seller,
-                            uint64_t batch_id);
+        ACTION closesalenft(const name& seller,
+                            const uint64_t& batch_id);
 
-        ACTION logcall(uint64_t dgood_id);
+        ACTION logcall(const uint64_t& dgood_id);
 
         TABLE lockednfts {
             uint64_t dgood_id;
@@ -171,11 +171,11 @@ CONTRACT dgoods: public contract {
 
       private:
         map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller);
-        void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
-        void _checkasset( asset amount, bool fungible );
-        void _mint(name to, name issuer, name category, name token_name,
-                  asset issued_supply, string relative_uri);
-        void _add_balance(name owner, name issuer, name category, name token_name,
-                         uint64_t category_name_id, asset quantity);
-        void _sub_balance(name owner, uint64_t category_name_id, asset quantity);
+        void _changeowner( const name& from, const name& to, const vector<uint64_t>& dgood_ids, const string& memo, const bool& istransfer);
+        void _checkasset( const asset& amount, const bool& fungible );
+        void _mint(const name& to, const name& issuer, const name& category, const name& token_name,
+                  const asset& issued_supply, const string& relative_uri);
+        void _add_balance(const name& owner, const name& issuer, const name& category, const name& token_name,
+                         const uint64_t& category_name_id, const asset& quantity);
+        void _sub_balance(const name& owner, const uint64_t& category_name_id, const asset& quantity);
 };

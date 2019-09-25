@@ -1,7 +1,7 @@
 #include <dgoods.hpp>
 #include <math.h>
 
-ACTION dgoods::setconfig(symbol_code sym, string version) {
+ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
 
     require_auth( get_self() );
     // valid symbol
@@ -16,17 +16,17 @@ ACTION dgoods::setconfig(symbol_code sym, string version) {
     config_table.set( config_singleton, get_self() );
 }
 
-ACTION dgoods::create(name issuer,
-                      name rev_partner,
-                      name category,
-                      name token_name,
-                      bool fungible,
-                      bool burnable,
-                      bool sellable,
-                      bool transferable,
-                      double rev_split,
-                      string base_uri,
-                      asset max_supply) {
+ACTION dgoods::create(const name& issuer,
+                      const name& rev_partner,
+                      const name& category,
+                      const name& token_name,
+                      const bool& fungible,
+                      const bool& burnable,
+                      const bool& sellable,
+                      const bool& transferable,
+                      const double& rev_split,
+                      const string& base_uri,
+                      const asset& max_supply) {
 
     require_auth( get_self() );
 
@@ -85,12 +85,12 @@ ACTION dgoods::create(name issuer,
 }
 
 
-ACTION dgoods::issue(name to,
-                     name category,
-                     name token_name,
-                     asset quantity,
-                     string relative_uri,
-                     string memo) {
+ACTION dgoods::issue(const name& to,
+                     const name& category,
+                     const name& token_name,
+                     const asset& quantity,
+                     const string& relative_uri,
+                     const string& memo) {
 
     check( is_account( to ), "to account does not exist");
     check( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -133,8 +133,8 @@ ACTION dgoods::issue(name to,
     });
 }
 
-ACTION dgoods::burnnft(name owner,
-                       vector<uint64_t> dgood_ids) {
+ACTION dgoods::burnnft(const name& owner,
+                       const vector<uint64_t>& dgood_ids) {
     require_auth(owner);
 
     check( dgood_ids.size() <= 20, "max batch size of 20" );
@@ -168,9 +168,9 @@ ACTION dgoods::burnnft(name owner,
     }
 }
 
-ACTION dgoods::burnft(name owner,
-                      uint64_t category_name_id,
-                      asset quantity) {
+ACTION dgoods::burnft(const name& owner,
+                      const uint64_t& category_name_id,
+                      const asset& quantity) {
     require_auth(owner);
 
 
@@ -192,10 +192,10 @@ ACTION dgoods::burnft(name owner,
     });
 }
 
-ACTION dgoods::transfernft(name from,
-                           name to,
-                           vector<uint64_t> dgood_ids,
-                           string memo ) {
+ACTION dgoods::transfernft(const name& from,
+                           const name& to,
+                           const vector<uint64_t>& dgood_ids,
+                           const string& memo ) {
 
     check( dgood_ids.size() <= 20, "max batch size of 20" );
     // ensure authorized to send from account
@@ -211,12 +211,12 @@ ACTION dgoods::transfernft(name from,
     _changeowner( from, to, dgood_ids, memo, true );
 }
 
-ACTION dgoods::transferft(name from,
-                          name to,
-                          name category,
-                          name token_name,
-                          asset quantity,
-                          string memo ) {
+ACTION dgoods::transferft(const name& from,
+                          const name& to,
+                          const name& category,
+                          const name& token_name,
+                          const asset& quantity,
+                          const string& memo ) {
     // ensure authorized to send from account
     check( from != to, "cannot transfer to self" );
     require_auth( from );
@@ -243,9 +243,9 @@ ACTION dgoods::transferft(name from,
     _add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 }
 
-ACTION dgoods::listsalenft(name seller,
-                           vector<uint64_t> dgood_ids,
-                           asset net_sale_amount) {
+ACTION dgoods::listsalenft(const name& seller,
+                           const vector<uint64_t>& dgood_ids,
+                           const asset& net_sale_amount) {
     require_auth( seller );
 
     check (dgood_ids.size() <= 20, "max batch size of 20");
@@ -285,8 +285,8 @@ ACTION dgoods::listsalenft(name seller,
     });
 }
 
-ACTION dgoods::closesalenft(name seller,
-                            uint64_t batch_id) {
+ACTION dgoods::closesalenft(const name& seller,
+                            const uint64_t& batch_id) {
     ask_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( batch_id, "cannot find sale to close" );
 
@@ -310,10 +310,10 @@ ACTION dgoods::closesalenft(name seller,
     }
 }
 
-void dgoods::buynft(name from,
-                    name to,
-                    asset quantity,
-                    string memo) {
+void dgoods::buynft(const name& from,
+                    const name& to,
+                    const asset& quantity,
+                    const string& memo) {
     // allow EOS to be sent by sending with empty string memo
     if ( memo == "deposit" ) return;
     // don't allow spoofs
@@ -363,7 +363,7 @@ void dgoods::buynft(name from,
 }
 
 // method to log dgood_id and match transaction to action
-ACTION dgoods::logcall(uint64_t dgood_id) {
+ACTION dgoods::logcall(const uint64_t& dgood_id) {
     require_auth( get_self() );
 }
 
@@ -401,7 +401,7 @@ map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount,
 }
 
 // Private
-void dgoods::_changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
+void dgoods::_changeowner(const name& from, const name& to, const vector<uint64_t>& dgood_ids, const string& memo, const bool& istransfer) {
     check (dgood_ids.size() <= 20, "max batch size of 20");
     // loop through vector of dgood_ids, check token exists
     dgood_index dgood_table( get_self(), get_self().value );
@@ -434,7 +434,7 @@ void dgoods::_changeowner(name from, name to, vector<uint64_t> dgood_ids, string
 }
 
 // Private
-void dgoods::_checkasset(asset amount, bool fungible) {
+void dgoods::_checkasset(const asset& amount, const bool& fungible) {
     auto sym = amount.symbol;
     if (fungible) {
         check( amount.amount > 0, "amount must be positive" );
@@ -450,12 +450,12 @@ void dgoods::_checkasset(asset amount, bool fungible) {
 }
 
 // Private
-void dgoods::_mint(name to,
-                  name issuer,
-                  name category,
-                  name token_name,
-                  asset issued_supply,
-                  string relative_uri) {
+void dgoods::_mint(const name& to,
+                   const name& issuer,
+                   const name& category,
+                   const name& token_name,
+                   const asset& issued_supply,
+                   const string& relative_uri) {
 
     dgood_index dgood_table( get_self(), get_self().value);
     auto dgood_id = dgood_table.available_primary_key();
@@ -481,8 +481,8 @@ void dgoods::_mint(name to,
 }
 
 // Private
-void dgoods::_add_balance(name owner, name ram_payer, name category, name token_name,
-                         uint64_t category_name_id, asset quantity) {
+void dgoods::_add_balance(const name& owner, const name& ram_payer, const name& category, const name& token_name,
+                         const uint64_t& category_name_id, const asset& quantity) {
     account_index to_account( get_self(), owner.value );
     auto acct = to_account.find( category_name_id );
     if ( acct == to_account.end() ) {
@@ -500,7 +500,7 @@ void dgoods::_add_balance(name owner, name ram_payer, name category, name token_
 }
 
 // Private
-void dgoods::_sub_balance(name owner, uint64_t category_name_id, asset quantity) {
+void dgoods::_sub_balance(const name& owner, const uint64_t& category_name_id, const asset& quantity) {
 
     account_index from_account( get_self(), owner.value );
     const auto& acct = from_account.get( category_name_id, "token does not exist in account" );

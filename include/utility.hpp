@@ -35,9 +35,9 @@ namespace utility {
     tuple<uint64_t, name> parsememo(const string& memo) {
         auto comma_pos = memo.find(',');
         string errormsg = "malformed memo: must have batch_id,to_account";
-        check ( comma_pos != string::npos, errormsg.c_str() );
+        check ( comma_pos != string::npos, errormsg );
         if ( comma_pos != string::npos ) {
-            check( ( comma_pos != memo.size() - 1 ), errormsg.c_str() );
+            check( ( comma_pos != memo.size() - 1 ), errormsg );
         }
         // will abort if stoull throws error since wasm no error checking
         uint64_t batch_id = stoull( trim( memo.substr( 0, comma_pos ) ) );
