@@ -94,7 +94,6 @@ ACTION dgoods::issue(const name& to,
 
     check( is_account( to ), "to account does not exist");
     check( memo.size() <= 256, "memo has more than 256 bytes" );
-    check( quantity.amount <= 100, "can issue 100 at a time");
 
     // dgoodstats table
     stats_index stats_table( get_self(), category.value );
@@ -111,17 +110,14 @@ ACTION dgoods::issue(const name& to,
     check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply.amount), "Cannot issue more than max supply" );
 
     if (dgood_stats.fungible == false) {
-        if ( quantity.amount > 1 ) {
-            asset issued_supply = dgood_stats.issued_supply;
-            asset one_token = asset( 1, dgood_stats.max_supply.symbol);
-            for ( uint64_t i = 1; i <= quantity.amount; i++ ) {
-                _mint(to, dgood_stats.issuer, category, token_name,
-                      issued_supply, relative_uri);
-                issued_supply += one_token;
-            }
-        } else {
+        check( quantity.amount <= 100, "can issue up to 100 at a time");
+        asset issued_supply = dgood_stats.issued_supply;
+        asset one_token = asset( 1, dgood_stats.max_supply.symbol);
+        for ( uint64_t i = 1; i <= quantity.amount; i++ ) {
             _mint(to, dgood_stats.issuer, category, token_name,
-                 dgood_stats.issued_supply, relative_uri);
+                  issued_supply, relative_uri);
+            // used to keep track of serial number when minting multiple
+            issued_supply += one_token;
         }
     }
     _add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
@@ -149,7 +145,7 @@ ACTION dgoods::burnnft(const name& owner,
         const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
 
         check( dgood_stats.burnable == true, "Not burnable");
-        check( dgood_stats.fungible == false, "Cannot call burnnft on fungible token, call burn instead");
+        check( dgood_stats.fungible == false, "Cannot call burnnft on fungible token, call burnft instead");
         // make sure token not locked;
         auto locked_nft = lock_table.find( dgood_id );
         check(locked_nft == lock_table.end(), "token locked");
@@ -249,7 +245,7 @@ ACTION dgoods::listsalenft(const name& seller,
     require_auth( seller );
 
     check (dgood_ids.size() <= 20, "max batch size of 20");
-    check( net_sale_amount.amount > .02, "minimum price of at least 0.02 EOS");
+    check( net_sale_amount.amount > .02 * pow(10, net_sale_amount.symbol.precision()), "minimum price of at least 0.02 EOS");
     check( net_sale_amount.symbol == symbol( symbol_code("EOS"), 4), "only accept EOS for sale" );
 
     dgood_index dgood_table( get_self(), get_self().value );
@@ -291,23 +287,16 @@ ACTION dgoods::closesalenft(const name& seller,
     const auto& ask = ask_table.get( batch_id, "cannot find sale to close" );
 
     lock_index lock_table( get_self(), get_self().value );
-    // if sale has expired anyone can call this and ask removed, token sent back to orig seller
-    if ( time_point_sec(current_time_point()) > ask.expiration ) {
-        for ( auto const& dgood_id: ask.dgood_ids ) {
-            const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
-            lock_table.erase( locked_nft );
-        }
-        ask_table.erase( ask );
-
-    } else {
+    if ( time_point_sec(current_time_point()) <= ask.expiration ) {
         require_auth( seller );
         check( ask.seller == seller, "only the seller can cancel a sale in progress");
-        for ( auto const& dgood_id: ask.dgood_ids ) {
-            const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
-            lock_table.erase( locked_nft );
-        }
-        ask_table.erase( ask );
     }
+    // sale has expired anyone can call this and ask removed, token removed from asks/lock
+    for ( auto const& dgood_id: ask.dgood_ids ) {
+        const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+        lock_table.erase( locked_nft );
+    }
+    ask_table.erase( ask );
 }
 
 void dgoods::buynft(const name& from,
