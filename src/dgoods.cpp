@@ -9,7 +9,7 @@ ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
 
     // can only have one symbol per contract
     config_index config_table(get_self(), get_self().value);
-    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 0 } );
+    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 0, 0 } );
 
     // setconfig will always update version when called
     config_singleton.version = version;
@@ -447,7 +447,7 @@ void dgoods::_mint(const name& to,
                    const string& relative_uri) {
 
     dgood_index dgood_table( get_self(), get_self().value);
-    auto dgood_id = dgood_table.available_primary_key();
+    auto dgood_id = _nextdgoodid();
     if ( relative_uri.empty() ) {
         dgood_table.emplace( issuer, [&]( auto& dg) {
             dg.id = dgood_id;
@@ -467,6 +467,18 @@ void dgoods::_mint(const name& to,
         });
     }
     SEND_INLINE_ACTION( *this, logcall, { { get_self(), "active"_n } }, { dgood_id } );
+}
+
+// available_primary_key() will reuise id's if last minted token is burned -- bad
+uint64_t dgoods::_nextdgoodid() {
+
+    // get next_dgood_id and increment
+    config_index config_table( get_self(), get_self().value );
+    check(config_table.exists(), "dgoods config table does not exist, setconfig first");
+    auto config_singleton  = config_table.get();
+    auto next_dgood_id = config_singleton.next_dgood_id++;
+    config_table.set( config_singleton, _self );
+    return next_dgood_id;
 }
 
 // Private

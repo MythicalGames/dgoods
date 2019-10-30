@@ -99,6 +99,7 @@ CONTRACT dgoods: public contract {
             string version;
             symbol_code symbol;
             uint64_t category_name_id;
+            uint64_t next_dgood_id;
         };
 
         TABLE categoryinfo {
@@ -175,6 +176,7 @@ CONTRACT dgoods: public contract {
         void _checkasset( const asset& amount, const bool& fungible );
         void _mint(const name& to, const name& issuer, const name& category, const name& token_name,
                   const asset& issued_supply, const string& relative_uri);
+        uint64_t _nextdgoodid();
         void _add_balance(const name& owner, const name& issuer, const name& category, const name& token_name,
                          const uint64_t& category_name_id, const asset& quantity);
         void _sub_balance(const name& owner, const uint64_t& category_name_id, const asset& quantity);
