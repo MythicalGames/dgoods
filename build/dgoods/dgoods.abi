@@ -152,6 +152,10 @@
                     "type": "string"
                 },
                 {
+                    "name": "max_issue_days",
+                    "type": "uint32"
+                },
+                {
                     "name": "max_supply",
                     "type": "asset"
                 }
@@ -228,6 +232,10 @@
                     "type": "asset"
                 },
                 {
+                    "name": "max_issue_window",
+                    "type": "time_point_sec"
+                },
+                {
                     "name": "current_supply",
                     "type": "asset"
                 },
@@ -242,6 +250,20 @@
                 {
                     "name": "base_uri",
                     "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "freezemaxsup",
+            "base": "",
+            "fields": [
+                {
+                    "name": "category",
+                    "type": "name"
+                },
+                {
+                    "name": "token_name",
+                    "type": "name"
                 }
             ]
         },
@@ -346,6 +368,10 @@
                 {
                     "name": "category_name_id",
                     "type": "uint64"
+                },
+                {
+                    "name": "next_dgood_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -421,6 +447,11 @@
         {
             "name": "create",
             "type": "create",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "freezemaxsup",
+            "type": "freezemaxsup",
             "ricardian_contract": ""
         },
         {

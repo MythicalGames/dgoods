@@ -36,6 +36,7 @@ CONTRACT dgoods: public contract {
                       const bool& transferable,
                       const double& rev_split,
                       const string& base_uri,
+                      const uint32_t& max_issue_days,
                       const asset& max_supply);
 
         ACTION issue(const name& to,
@@ -44,6 +45,8 @@ CONTRACT dgoods: public contract {
                      const asset& quantity,
                      const string& relative_uri,
                      const string& memo);
+
+        ACTION freezemaxsup( const name& category, const name& token_name );
 
         ACTION burnnft(const name& owner,
                        const vector<uint64_t>& dgood_ids);
@@ -111,19 +114,20 @@ CONTRACT dgoods: public contract {
 
         // scope is category, then token_name is unique
         TABLE dgoodstats {
-            bool     fungible;
-            bool     burnable;
-            bool     sellable;
-            bool     transferable;
-            name     issuer;
-            name     rev_partner;
-            name     token_name;
-            uint64_t category_name_id;
-            asset    max_supply;
-            asset    current_supply;
-            asset    issued_supply;
-            double   rev_split;
-            string   base_uri;
+            bool           fungible;
+            bool           burnable;
+            bool           sellable;
+            bool           transferable;
+            name           issuer;
+            name           rev_partner;
+            name           token_name;
+            uint64_t       category_name_id;
+            asset          max_supply;
+            time_point_sec max_issue_window;
+            asset          current_supply;
+            asset          issued_supply;
+            double         rev_split;
+            string         base_uri;
 
             uint64_t primary_key() const { return token_name.value; }
         };
