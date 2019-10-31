@@ -30,6 +30,20 @@ different metadata
 Changes
 =======
 
+v1.1
+----
+
+The main feature added in v1.1 is the ability to mint tokens in a time limited fashion instead of
+supply limited. To do this, one sets the available window time in days and sets `max_supply` to 0.
+This enables tokens to be minted until the window has elapsed. Once the window has elapsed, or if
+the contract owner wants to end it early the `freezemaxsup()` action may be called. This will set
+the window time to 0 and the current supply will become the max supply, ensuring no more tokens may
+be minted. To mint as before, just set `max_issue_days` to 0 in the `create` call. Alternatively,
+one may set both a max issue time and max supply.
+
+* added time based minting
+* ensure dgood_id is unique even with tokens being burned (aka replace `available_primary_key()` )
+
 v1.0
 ----
 
@@ -41,7 +55,7 @@ We have a [basic usage tutorial](example_usage.md)
 
 General
 
-* general bug fixes
+* general bug fixes / optimizations
 * removed custom dasset type in favor of standard asset type
 * removed inline actions in most places to comply with EOS 1.8 changes
 * `issue` function made batch
