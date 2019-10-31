@@ -30,7 +30,7 @@ different metadata
 Changes
 =======
 
-v1.1
+v1.1 - Time Based Minting
 ----
 
 The main feature added in v1.1 is the ability to mint tokens in a time limited fashion instead of
