@@ -38,7 +38,8 @@ cleos get table dgood.token dgood.token tokenconfigs
       "standard": "dgoods",
       "version": "1.0",
       "symbol": "TCKT",
-      "category_name_id": 0
+      "category_name_id": 0,
+      "next_dgood_id": 0
     }
   ],
   "more": false
@@ -51,6 +52,9 @@ cleos get table dgood.token dgood.token tokenconfigs
 Now that we have set the tokenconfig data, we are free to create and issue tokens. Before actually
 issuing tokens to an account, we must first create the token type. This allows us to set properties
 such as if the token will be fungible, transferable, burnable etc and what the max supply should be.
+Note we are not doing time based mintint, but if we wanted to we would set `max_issue_days` to some
+value other than 0 and set max_supply to 0. Alternatively, you can set a max issue time and a max
+supply.
 
 ```
 cleos push action dgood.token create '{"issuer": "dgood.token", 
@@ -63,6 +67,7 @@ cleos push action dgood.token create '{"issuer": "dgood.token",
                                        "transferable": false,
                                        "rev_split": 0.05,
                                        "base_uri": "https://myticketingsite.com/concert1/ticket1/",
+                                       "max_issue_days": 0,
                                        "max_supply": "1000 TCKT"}' -p dgood.token
 ```
 Here we created a type of token that could be a hypothetical concert ticket with a max supply of 1000. 
@@ -117,6 +122,7 @@ all tokens of a specific type. This table is scoped by the category name.
       "token_name": "ticket1",
       "category_name_id": 0.
       "max_supply": "1000 TCKT",
+      "max_issue_window": '1970-01-01T00:00:00',
       "current_supply": "5 TCKT",
       "issued_supply": "5 TCKT",
       "rev_split": "0.05000000000000000",

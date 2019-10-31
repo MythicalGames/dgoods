@@ -9,7 +9,7 @@ ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
 
     // can only have one symbol per contract
     config_index config_table(get_self(), get_self().value);
-    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 0 } );
+    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 0, 0 } );
 
     // setconfig will always update version when called
     config_singleton.version = version;
@@ -26,12 +26,25 @@ ACTION dgoods::create(const name& issuer,
                       const bool& transferable,
                       const double& rev_split,
                       const string& base_uri,
+                      const uint32_t& max_issue_days,
                       const asset& max_supply) {
 
     require_auth( get_self() );
 
+    time_point_sec max_issue_window = time_point_sec(0);
+    // true max supply, not time based supply window
+    if ( max_issue_days == 0 ) {
+        // cannot have both max_supply and max_issue_days be 0
+        _checkasset( max_supply, fungible );
+    } else {
+        uint32_t max_issue_seconds = max_issue_days * 24 * 3600;
+        max_issue_window = time_point_sec(current_time_point()) + max_issue_seconds;
+        check( max_supply.amount >= 0, "max supply must be 0 or greater" );
+        if (fungible == false) {
+            check( max_supply.symbol.precision() == 0, "NFT must have max supply as int, precision of 0" );
+        }
+    }
 
-    _checkasset( max_supply, fungible );
     // check if issuer account exists
     check( is_account( issuer ), "issuer account does not exist" );
     check( is_account( rev_partner), "rev_partner account does not exist" );
@@ -77,6 +90,7 @@ ACTION dgoods::create(const name& issuer,
         stats.rev_split = rev_split;
         stats.base_uri = base_uri;
         stats.max_supply = max_supply;
+        stats.max_issue_window = max_issue_window;
     });
 
     // successful creation of token, update category_name_id to reflect
@@ -106,8 +120,16 @@ ACTION dgoods::issue(const name& to,
     _checkasset( quantity, dgood_stats.fungible );
     string string_precision = "precision of quantity must be " + to_string( dgood_stats.max_supply.symbol.precision() );
     check( quantity.symbol == dgood_stats.max_supply.symbol, string_precision.c_str() );
-    // check cannot issue more than max supply, careful of overflow of uint
-    check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply.amount), "Cannot issue more than max supply" );
+
+    // time based minting
+    if ( dgood_stats.max_issue_window != time_point_sec(0) ) {
+        check(time_point_sec(current_time_point()) <= dgood_stats.max_issue_window, "issue window has closed, cannot issue more");
+    }
+
+    if (dgood_stats.max_supply.amount != 0) {
+        // check cannot issue more than max supply, careful of overflow of uint
+        check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply.amount), "Cannot issue more than max supply" );
+    }
 
     if (dgood_stats.fungible == false) {
         check( quantity.amount <= 100, "can issue up to 100 at a time");
@@ -356,6 +378,21 @@ ACTION dgoods::logcall(const uint64_t& dgood_id) {
     require_auth( get_self() );
 }
 
+ACTION dgoods::freezemaxsup(const name& category, const name& token_name) {
+    require_auth( get_self() );
+
+    // dgoodstats table
+    stats_index stats_table( get_self(), category.value );
+    const auto& dgood_stats = stats_table.get( token_name.value,
+                                               "Token with category and token_name does not exist" );
+    check(dgood_stats.max_issue_window != time_point_sec(0), "can't freeze max supply unless time based minting");
+    check(dgood_stats.current_supply.amount != 0, "need to issue at least one token before freezing");
+    stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
+        s.max_supply = dgood_stats.current_supply;
+        s.max_issue_window = time_point_sec(0);
+    });
+}
+
 // Private
 map<name, asset> dgoods::_calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller) {
     map<name, asset> fee_map;
@@ -447,7 +484,7 @@ void dgoods::_mint(const name& to,
                    const string& relative_uri) {
 
     dgood_index dgood_table( get_self(), get_self().value);
-    auto dgood_id = dgood_table.available_primary_key();
+    auto dgood_id = _nextdgoodid();
     if ( relative_uri.empty() ) {
         dgood_table.emplace( issuer, [&]( auto& dg) {
             dg.id = dgood_id;
@@ -467,6 +504,18 @@ void dgoods::_mint(const name& to,
         });
     }
     SEND_INLINE_ACTION( *this, logcall, { { get_self(), "active"_n } }, { dgood_id } );
+}
+
+// available_primary_key() will reuise id's if last minted token is burned -- bad
+uint64_t dgoods::_nextdgoodid() {
+
+    // get next_dgood_id and increment
+    config_index config_table( get_self(), get_self().value );
+    check(config_table.exists(), "dgoods config table does not exist, setconfig first");
+    auto config_singleton  = config_table.get();
+    auto next_dgood_id = config_singleton.next_dgood_id++;
+    config_table.set( config_singleton, _self );
+    return next_dgood_id;
 }
 
 // Private
@@ -510,7 +559,7 @@ extern "C" {
 
         if ( code == self ) {
             switch( action ) {
-                EOSIO_DISPATCH_HELPER( dgoods, (setconfig)(create)(issue)(burnnft)(burnft)(transfernft)(transferft)(listsalenft)(closesalenft)(logcall) )
+                EOSIO_DISPATCH_HELPER( dgoods, (setconfig)(create)(issue)(burnnft)(burnft)(transfernft)(transferft)(listsalenft)(closesalenft)(logcall)(freezemaxsup) )
             }
         }
 
