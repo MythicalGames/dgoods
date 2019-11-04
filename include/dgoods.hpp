@@ -78,6 +78,12 @@ CONTRACT dgoods: public contract {
 
         ACTION logcall(const uint64_t& dgood_id);
 
+        ACTION logsale(const vector<uint64_t>& dgood_ids,
+                       const name& seller,
+                       const name& buyer,
+                       const name& receiver);
+
+
         TABLE lockednfts {
             uint64_t dgood_id;
 

@@ -378,6 +378,11 @@ ACTION dgoods::logcall(const uint64_t& dgood_id) {
     require_auth( get_self() );
 }
 
+// method to logsuccessful sale
+ACTION dgoods::logsale(const vector<uint64_t>& dgood_ids, const name& seller, const name& buyer, const name& receiver) {
+    require_auth( get_self() );
+}
+
 ACTION dgoods::freezemaxsup(const name& category, const name& token_name) {
     require_auth( get_self() );
 

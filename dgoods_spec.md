@@ -66,7 +66,8 @@ must match the symbol in `setconfig`.
 
 ```c++
 ACTION create(name issuer, name rev_partner, name category, name token_name, bool fungible, bool
-burnable, bool sellable, bool transferable, double rev_split, string base_uri, asset max_supply);
+burnable, bool sellable, bool transferable, double rev_split, string base_uri, uint32_t
+max_issue_days, asset max_supply);
 ```
 
 **ISSUE**: The issue method mints a token and gives ownership to the
@@ -135,6 +136,14 @@ will remove listing, remove lock and return nft to seller
 ACTION closesalenft(name seller, uint64_t batch_id);
 ```
 
+*FREEZEMAXSUP*: Used either to end the time based minting early or to finalize the max supply after
+the minting window has passed. Only callable if time based minting and max supply is not set. Once
+successfully called, will set max supply to current supply and end the minting period.
+
+```c++
+ACTION freezemaxsup(name category, name token_name)
+```
+
 Token Data
 ==========
 
@@ -159,6 +168,7 @@ TABLE tokenconfigs {
     string version;
     symbol_code symbol;
     uint64_t category_name_id;
+    uint64_t next_dgood_id;
 };
 ```
 
@@ -174,19 +184,20 @@ tokens are burned as issued supply never decreases.
 ```c++
 // scope is category, then token_name is unique
 TABLE dgoodstats {
-    bool     fungible;
-    bool     burnable;
-    bool     sellable;
-    bool     transferable;
-    name     issuer;
-    name     rev_partner;
-    name     token_name;
-    uint64_t category_name_id;
-    asset    max_supply;
-    asset    current_supply;
-    asset    issued_supply;
-    double   rev_split;
-    string   base_uri;
+    bool           fungible;
+    bool           burnable;
+    bool           sellable;
+    bool           transferable;
+    name           issuer;
+    name           rev_partner;
+    name           token_name;
+    uint64_t       category_name_id;
+    asset          max_supply;
+    time_point_sec max_issue_window;
+    asset          current_supply;
+    asset          issued_supply;
+    double         rev_split;
+    string         base_uri;
 
     uint64_t primary_key() const { return token_name.value; }
 };
