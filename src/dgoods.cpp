@@ -369,6 +369,9 @@ void dgoods::buynft(const name& from,
         const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
         lock_table.erase( locked_nft );
     }
+
+    SEND_INLINE_ACTION( *this, logsale, { { get_self(), "active"_n } }, { ask.dgood_ids, ask.seller, from, to_account } );
+
     // remove sale listing
     ask_table.erase( ask );
 }
