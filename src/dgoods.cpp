@@ -9,7 +9,7 @@ ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
 
     // can only have one symbol per contract
     config_index config_table(get_self(), get_self().value);
-    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 0, 0 } );
+    auto config_singleton  = config_table.get_or_create( get_self(), tokenconfigs{ "dgoods"_n, version, sym, 1, 1 } );
 
     // setconfig will always update version when called
     config_singleton.version = version;
