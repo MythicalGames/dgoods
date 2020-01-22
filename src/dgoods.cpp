@@ -128,7 +128,7 @@ ACTION dgoods::issue(const name& to,
 
     if (dgood_stats.max_supply.amount != 0) {
         // check cannot issue more than max supply, careful of overflow of uint
-        check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply.amount), "Cannot issue more than max supply" );
+        check( quantity.amount <= (dgood_stats.max_supply.amount - dgood_stats.issued_supply.amount), "Cannot issue more than max supply" );
     }
 
     if (dgood_stats.fungible == false) {
@@ -394,9 +394,9 @@ ACTION dgoods::freezemaxsup(const name& category, const name& token_name) {
     const auto& dgood_stats = stats_table.get( token_name.value,
                                                "Token with category and token_name does not exist" );
     check(dgood_stats.max_issue_window != time_point_sec(0), "can't freeze max supply unless time based minting");
-    check(dgood_stats.current_supply.amount != 0, "need to issue at least one token before freezing");
+    check(dgood_stats.issued_supply.amount != 0, "need to issue at least one token before freezing");
     stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
-        s.max_supply = dgood_stats.current_supply;
+        s.max_supply = dgood_stats.issued_supply;
         s.max_issue_window = time_point_sec(0);
     });
 }

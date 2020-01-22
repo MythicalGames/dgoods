@@ -336,6 +336,28 @@
             ]
         },
         {
+            "name": "logsale",
+            "base": "",
+            "fields": [
+                {
+                    "name": "dgood_ids",
+                    "type": "uint64[]"
+                },
+                {
+                    "name": "seller",
+                    "type": "name"
+                },
+                {
+                    "name": "buyer",
+                    "type": "name"
+                },
+                {
+                    "name": "receiver",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "setconfig",
             "base": "",
             "fields": [
@@ -467,6 +489,11 @@
         {
             "name": "logcall",
             "type": "logcall",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logsale",
+            "type": "logsale",
             "ricardian_contract": ""
         },
         {
