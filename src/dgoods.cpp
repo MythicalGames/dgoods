@@ -1,7 +1,8 @@
 #include <dgoods.hpp>
 #include <math.h>
 
-ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
+[[eosio::action]]
+void dgoods::setconfig(const symbol_code& sym, const string& version) {
 
     require_auth( get_self() );
     // valid symbol
@@ -16,7 +17,8 @@ ACTION dgoods::setconfig(const symbol_code& sym, const string& version) {
     config_table.set( config_singleton, get_self() );
 }
 
-ACTION dgoods::create(const name& issuer,
+[[eosio::action]]
+void dgoods::create(const name& issuer,
                       const name& rev_partner,
                       const name& category,
                       const name& token_name,
@@ -99,7 +101,8 @@ ACTION dgoods::create(const name& issuer,
 }
 
 
-ACTION dgoods::issue(const name& to,
+[[eosio::action]]
+void dgoods::issue(const name& to,
                      const name& category,
                      const name& token_name,
                      const asset& quantity,
@@ -151,7 +154,8 @@ ACTION dgoods::issue(const name& to,
     });
 }
 
-ACTION dgoods::burnnft(const name& owner,
+[[eosio::action]]
+void dgoods::burnnft(const name& owner,
                        const vector<uint64_t>& dgood_ids) {
     require_auth(owner);
 
@@ -186,7 +190,8 @@ ACTION dgoods::burnnft(const name& owner,
     }
 }
 
-ACTION dgoods::burnft(const name& owner,
+[[eosio::action]]
+void dgoods::burnft(const name& owner,
                       const uint64_t& category_name_id,
                       const asset& quantity) {
     require_auth(owner);
@@ -210,7 +215,8 @@ ACTION dgoods::burnft(const name& owner,
     });
 }
 
-ACTION dgoods::transfernft(const name& from,
+[[eosio::action]]
+void dgoods::transfernft(const name& from,
                            const name& to,
                            const vector<uint64_t>& dgood_ids,
                            const string& memo ) {
@@ -229,7 +235,8 @@ ACTION dgoods::transfernft(const name& from,
     _changeowner( from, to, dgood_ids, memo, true );
 }
 
-ACTION dgoods::transferft(const name& from,
+[[eosio::action]]
+void dgoods::transferft(const name& from,
                           const name& to,
                           const name& category,
                           const name& token_name,
@@ -261,7 +268,8 @@ ACTION dgoods::transferft(const name& from,
     _add_balance(to, get_self(), category, token_name, dgood_stats.category_name_id, quantity);
 }
 
-ACTION dgoods::listsalenft(const name& seller,
+[[eosio::action]]
+void dgoods::listsalenft(const name& seller,
                            const vector<uint64_t>& dgood_ids,
                            const asset& net_sale_amount) {
     require_auth( seller );
@@ -303,7 +311,8 @@ ACTION dgoods::listsalenft(const name& seller,
     });
 }
 
-ACTION dgoods::closesalenft(const name& seller,
+[[eosio::action]]
+void dgoods::closesalenft(const name& seller,
                             const uint64_t& batch_id) {
     ask_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( batch_id, "cannot find sale to close" );
@@ -377,16 +386,19 @@ void dgoods::buynft(const name& from,
 }
 
 // method to log dgood_id and match transaction to action
-ACTION dgoods::logcall(const uint64_t& dgood_id) {
+[[eosio::action]]
+void dgoods::logcall(const uint64_t& dgood_id) {
     require_auth( get_self() );
 }
 
 // method to logsuccessful sale
-ACTION dgoods::logsale(const vector<uint64_t>& dgood_ids, const name& seller, const name& buyer, const name& receiver) {
+[[eosio::action]]
+void dgoods::logsale(const vector<uint64_t>& dgood_ids, const name& seller, const name& buyer, const name& receiver) {
     require_auth( get_self() );
 }
 
-ACTION dgoods::freezemaxsup(const name& category, const name& token_name) {
+[[eosio::action]]
+void dgoods::freezemaxsup(const name& category, const name& token_name) {
     require_auth( get_self() );
 
     // dgoodstats table
@@ -566,6 +578,8 @@ extern "C" {
         auto self = receiver;
 
         if ( code == self ) {
+            bool executed = false; // TODO: REMOVE THIS
+
             switch( action ) {
                 EOSIO_DISPATCH_HELPER( dgoods, (setconfig)(create)(issue)(burnnft)(burnft)(transfernft)(transferft)(listsalenft)(closesalenft)(logcall)(freezemaxsup) )
             }
