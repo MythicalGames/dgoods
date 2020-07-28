@@ -18,8 +18,6 @@ CONTRACT dgoods: public contract {
     public:
         using contract::contract;
 
-        const int WEEK_SEC = 3600*24*7;
-
         dgoods(name receiver, name code, datastream<const char*> ds)
             : contract(receiver, code, ds) {}
 
