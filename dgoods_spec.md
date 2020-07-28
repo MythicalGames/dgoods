@@ -123,10 +123,11 @@ ACTION transferft(name from, name to, name category, name token_name, asset quan
 
 **LISTSALENFT**: Used to list nfts for sale in the token contract itself. Callable only by owner,
 if sellable is true and token not locked, creates sale listing in the token contract, marks token as
-not transferable while listed for sale. An array of dgood_ids is required.
+not transferable while listed for sale. Sale is valid for `sell_by_days` number of days. If
+`sell_by_days` is 0, listing is indefinite. An array of dgood_ids is required.
 
 ```c++
-ACTION listsalenft(name seller, vector<uint64_t> dgood_ids, asset net_sale_amount);
+ACTION listsalenft(name seller, vector<uint64_t> dgood_ids, uint32_t sell_by_days, asset net_sale_amount);
 ```
 
 **CLOSESALENFT**: Callable by seller if listing hasn't expired, or anyone if the listing is expired;

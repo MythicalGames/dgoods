@@ -30,6 +30,20 @@ different metadata
 Changes
 =======
 
+v1.1.5 - List For Sale Configurable Time
+----
+
+Instead of a sale lasting a default of one week, it is now configurable and exposed as a parameter
+in `listsalenft`.
+
+* if `sell_by_days` is 0, sale is treated as indefinite
+* if `sell_by_days` > 0, the sale will be valid for `sell_by_days` number of days
+
+Note that a sale will still need to be closed after expiration has passed. This can be done by
+anyone if the sale is expired by calling `closesalenft`.
+
+
+
 v1.1 - Time Based Minting
 ----
 

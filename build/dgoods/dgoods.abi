@@ -310,6 +310,10 @@
                     "type": "uint64[]"
                 },
                 {
+                    "name": "sell_by_days",
+                    "type": "uint32"
+                },
+                {
                     "name": "net_sale_amount",
                     "type": "asset"
                 }
