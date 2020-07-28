@@ -18,8 +18,6 @@ CONTRACT dgoods: public contract {
     public:
         using contract::contract;
 
-        const int WEEK_SEC = 3600*24*7;
-
         dgoods(name receiver, name code, datastream<const char*> ds)
             : contract(receiver, code, ds) {}
 
@@ -71,6 +69,7 @@ CONTRACT dgoods: public contract {
 
         ACTION listsalenft(const name& seller,
                            const vector<uint64_t>& dgood_ids,
+                           const uint32_t sell_by_days,
                            const asset& net_sale_amount);
 
         ACTION closesalenft(const name& seller,

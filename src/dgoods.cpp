@@ -263,8 +263,16 @@ ACTION dgoods::transferft(const name& from,
 
 ACTION dgoods::listsalenft(const name& seller,
                            const vector<uint64_t>& dgood_ids,
+                           const uint32_t sell_by_days,
                            const asset& net_sale_amount) {
     require_auth( seller );
+
+    time_point_sec expiration = time_point_sec(0);
+
+    if ( sell_by_days != 0 ) {
+        uint32_t sell_by_seconds = sell_by_days * 24 * 3600;
+        expiration = time_point_sec(current_time_point()) + sell_by_seconds;
+    }
 
     check (dgood_ids.size() <= 20, "max batch size of 20");
     check( net_sale_amount.amount > .02 * pow(10, net_sale_amount.symbol.precision()), "minimum price of at least 0.02 EOS");
@@ -299,7 +307,7 @@ ACTION dgoods::listsalenft(const name& seller,
         a.dgood_ids = dgood_ids;
         a.seller = seller;
         a.amount = net_sale_amount;
-        a.expiration = time_point_sec(current_time_point()) + WEEK_SEC;
+        a.expiration = expiration;
     });
 }
 
@@ -309,7 +317,7 @@ ACTION dgoods::closesalenft(const name& seller,
     const auto& ask = ask_table.get( batch_id, "cannot find sale to close" );
 
     lock_index lock_table( get_self(), get_self().value );
-    if ( time_point_sec(current_time_point()) <= ask.expiration ) {
+    if ( ask.expiration == time_point_sec(0) || time_point_sec(current_time_point()) <= ask.expiration ) {
         require_auth( seller );
         check( ask.seller == seller, "only the seller can cancel a sale in progress");
     }
@@ -342,7 +350,7 @@ void dgoods::buynft(const name& from,
     ask_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( batch_id, "cannot find listing" );
     check ( ask.amount.amount == quantity.amount, "send the correct amount");
-    check (ask.expiration > time_point_sec(current_time_point()), "sale has expired");
+    check ( ask.expiration == time_point_sec(0) || ask.expiration > time_point_sec(current_time_point()), "sale has expired");
 
     // nft(s) bought, change owner to buyer regardless of transferable
     _changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false);
